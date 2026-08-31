@@ -47,7 +47,6 @@
       font-size: 14px;
     }
 
-    /* Экраны-вкладки */
     .tab-screen {
       display: none;
     }
@@ -105,7 +104,6 @@
       width: 100%;
     }
 
-    /* Инвентарь */
     .inventory-summary {
       display: flex;
       justify-content: space-between;
@@ -180,6 +178,104 @@
     .inventory-empty .icon {
       font-size: 40px;
       margin-bottom: 10px;
+    }
+
+    /* ===== Профиль ===== */
+    .profile-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px 20px;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffb800, #ff7a00);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .profile-username {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 0 16px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: #17171f;
+      border: 1px solid #24242e;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-card .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffb800;
+      margin-bottom: 4px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .profile-menu {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #17171f;
+      border: 1px solid #24242e;
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+    }
+
+    .menu-item .menu-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .menu-item .menu-arrow {
+      color: #666;
     }
 
     .bottom-nav {
@@ -460,6 +556,45 @@
     </div>
   </div>
 
+  <!-- Вкладка: Профиль -->
+  <div class="tab-screen" id="tab-profile">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profile-avatar">?</div>
+      <div class="profile-name" id="profile-name">Игрок</div>
+      <div class="profile-username" id="profile-username"></div>
+    </div>
+
+    <div class="profile-stats">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-opened">0</div>
+        <div class="stat-label">Кейсов открыто</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-earned">0 ₴</div>
+        <div class="stat-label">Получено ценностей</div>
+      </div>
+    </div>
+
+    <div class="profile-menu">
+      <div class="menu-item">
+        <div class="menu-left">💳 <span>Пополнить баланс</span></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-left">🌐 <span>Валюта: Гривна (₴)</span></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-left">📜 <span>История открытий</span></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-left">🎧 <span>Поддержка</span></div>
+        <div class="menu-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
   <div class="bottom-nav">
     <div class="nav-item active" id="nav-cases">
       <div class="icon">🎁</div>
@@ -550,8 +685,9 @@
       }
     ];
 
-    // Инвентарь пока хранится прямо в памяти браузера (сбрасывается при перезапуске)
+    // Данные, которые пока хранятся только в памяти браузера (сбрасываются при перезапуске)
     let inventory = [];
+    let casesOpenedCount = 0;
 
     // ===== Рендер сетки кейсов =====
     const grid = document.getElementById("cases-grid");
@@ -567,9 +703,43 @@
       grid.appendChild(card);
     });
 
+    // ===== Профиль: подтягиваем данные из Telegram, если есть =====
+    function initProfile() {
+      const avatarEl = document.getElementById("profile-avatar");
+      const nameEl = document.getElementById("profile-name");
+      const usernameEl = document.getElementById("profile-username");
+
+      const tgUser = tg?.initDataUnsafe?.user;
+
+      if (tgUser) {
+        const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
+        nameEl.textContent = fullName || "Игрок";
+        usernameEl.textContent = tgUser.username ? `@${tgUser.username}` : "";
+
+        if (tgUser.photo_url) {
+          avatarEl.innerHTML = `<img src="${tgUser.photo_url}" alt="avatar">`;
+        } else {
+          avatarEl.textContent = (fullName[0] || "И").toUpperCase();
+        }
+      } else {
+        // Если открыто не в Telegram (например, для теста в браузере)
+        nameEl.textContent = "Игрок";
+        usernameEl.textContent = "";
+        avatarEl.textContent = "И";
+      }
+    }
+    initProfile();
+
+    function updateProfileStats() {
+      document.getElementById("stat-opened").textContent = casesOpenedCount;
+      const totalEarned = inventory.reduce((sum, i) => sum + i.value, 0);
+      document.getElementById("stat-earned").textContent = `${totalEarned} ₴`;
+    }
+
     // ===== Переключение вкладок (нижнее меню) =====
     const tabCases = document.getElementById("tab-cases");
     const tabInventory = document.getElementById("tab-inventory");
+    const tabProfile = document.getElementById("tab-profile");
     const navCases = document.getElementById("nav-cases");
     const navInventory = document.getElementById("nav-inventory");
     const navProfile = document.getElementById("nav-profile");
@@ -577,8 +747,10 @@
     function switchTab(tab) {
       tabCases.classList.remove("active");
       tabInventory.classList.remove("active");
+      tabProfile.classList.remove("active");
       navCases.classList.remove("active");
       navInventory.classList.remove("active");
+      navProfile.classList.remove("active");
 
       if (tab === "cases") {
         tabCases.classList.add("active");
@@ -587,12 +759,23 @@
         tabInventory.classList.add("active");
         navInventory.classList.add("active");
         renderInventory();
+      } else if (tab === "profile") {
+        tabProfile.classList.add("active");
+        navProfile.classList.add("active");
+        updateProfileStats();
       }
     }
 
     navCases.addEventListener("click", () => switchTab("cases"));
     navInventory.addEventListener("click", () => switchTab("inventory"));
-    navProfile.addEventListener("click", () => alert("Профиль появится на следующем этапе 🙂"));
+    navProfile.addEventListener("click", () => switchTab("profile"));
+
+    // Пункты меню профиля пока заглушки
+    document.querySelectorAll(".menu-item").forEach(item => {
+      item.addEventListener("click", () => {
+        alert("Эта функция появится на следующих этапах 🙂");
+      });
+    });
 
     // ===== Рендер инвентаря =====
     function renderInventory() {
@@ -688,6 +871,7 @@
 
     spinBtn.addEventListener("click", () => {
       spinBtn.disabled = true;
+      casesOpenedCount++;
       const winner = pickWinner(currentCase.items);
       const winIndex = buildStrip(currentCase.items, winner);
 
@@ -720,7 +904,6 @@
     }
 
     document.getElementById("btn-again").addEventListener("click", () => {
-      // Если приз не добавили в инвентарь — он просто теряется при новом открытии
       resultModal.classList.remove("active");
       spinBtn.disabled = false;
     });
@@ -739,6 +922,9 @@
       }, 500);
     });
   </script>
+
+</body>
+</html>
 
 </body>
 </html>
