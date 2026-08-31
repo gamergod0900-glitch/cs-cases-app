@@ -11,15 +11,15 @@
       margin: 0;
       padding: 0;
     }
- 
+
     body {
       background: #0e0e12;
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding-bottom: 80px; /* место под нижнее меню */
+      padding-bottom: 80px;
+      overflow-x: hidden;
     }
- 
-    /* Шапка */
+
     .header {
       display: flex;
       align-items: center;
@@ -30,12 +30,12 @@
       top: 0;
       z-index: 10;
     }
- 
+
     .header .logo {
       font-size: 18px;
       font-weight: 700;
     }
- 
+
     .balance {
       display: flex;
       align-items: center;
@@ -46,15 +46,14 @@
       font-weight: 600;
       font-size: 14px;
     }
- 
-    /* Сетка кейсов */
+
     .cases-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 14px;
       padding: 16px;
     }
- 
+
     .case-card {
       background: #17171f;
       border-radius: 16px;
@@ -65,12 +64,13 @@
       text-align: center;
       border: 1px solid #24242e;
       transition: transform 0.15s ease;
+      cursor: pointer;
     }
- 
+
     .case-card:active {
       transform: scale(0.96);
     }
- 
+
     .case-card img {
       width: 100%;
       max-width: 130px;
@@ -78,14 +78,14 @@
       object-fit: contain;
       margin-bottom: 10px;
     }
- 
+
     .case-card .case-name {
       font-size: 14px;
       font-weight: 600;
       margin-bottom: 8px;
       min-height: 34px;
     }
- 
+
     .case-card .case-price {
       background: linear-gradient(90deg, #ffb800, #ff7a00);
       color: #1a1a1a;
@@ -95,8 +95,7 @@
       border-radius: 12px;
       width: 100%;
     }
- 
-    /* Нижняя навигация */
+
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -106,8 +105,9 @@
       background: #16161c;
       border-top: 1px solid #24242e;
       padding: 10px 0;
+      z-index: 10;
     }
- 
+
     .nav-item {
       flex: 1;
       display: flex;
@@ -117,27 +117,239 @@
       font-size: 11px;
       color: #888;
     }
- 
+
     .nav-item.active {
       color: #ffb800;
     }
- 
+
     .nav-item .icon {
       font-size: 20px;
+    }
+
+    /* ===== Экран открытия кейса ===== */
+    .open-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0e0e12;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+    }
+
+    .open-screen.active {
+      display: flex;
+    }
+
+    .open-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #16161c;
+    }
+
+    .back-btn {
+      font-size: 22px;
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .open-header .title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .case-preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    .case-preview img {
+      width: 140px;
+      height: 120px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .roulette-wrap {
+      position: relative;
+      width: 100%;
+      height: 130px;
+      overflow: hidden;
+      background: #17171f;
+      border-top: 1px solid #24242e;
+      border-bottom: 1px solid #24242e;
+      margin-top: 10px;
+    }
+
+    .roulette-pointer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 3px;
+      background: #ffb800;
+      transform: translateX(-50%);
+      z-index: 5;
+      box-shadow: 0 0 10px #ffb800;
+    }
+
+    .roulette-strip {
+      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      will-change: transform;
+    }
+
+    .roulette-item {
+      width: 110px;
+      height: 110px;
+      margin: 10px 5px;
+      background: #1e1e28;
+      border-radius: 12px;
+      border: 2px solid #33333f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .roulette-item img {
+      width: 85%;
+      height: 85%;
+      object-fit: contain;
+    }
+
+    .rarity-common { border-color: #7a7a85; }
+    .rarity-rare { border-color: #4da6ff; box-shadow: 0 0 10px rgba(77,166,255,0.4); }
+    .rarity-epic { border-color: #b34dff; box-shadow: 0 0 10px rgba(179,77,255,0.4); }
+    .rarity-legendary { border-color: #ffb800; box-shadow: 0 0 14px rgba(255,184,0,0.6); }
+
+    .roulette-item.winner {
+      animation: winnerPulse 0.6s ease-in-out 2;
+    }
+
+    @keyframes winnerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .spin-btn {
+      margin: 20px auto;
+      display: block;
+      background: linear-gradient(90deg, #ffb800, #ff7a00);
+      color: #1a1a1a;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      padding: 14px 40px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .spin-btn:disabled {
+      opacity: 0.5;
+    }
+
+    .result-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .result-modal.active {
+      display: flex;
+    }
+
+    .result-card {
+      background: #17171f;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      width: 100%;
+      max-width: 300px;
+      border: 1px solid #2a2a35;
+    }
+
+    .result-card .label {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 10px;
+    }
+
+    .result-card img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .result-card .item-name {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .result-card .item-value {
+      color: #ffb800;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    .result-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #ffb800, #ff7a00);
+      color: #1a1a1a;
+      font-weight: 700;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: #23232c;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
- 
+
   <div class="header">
     <div class="logo">🎁 CS Cases</div>
     <div class="balance">💰 <span id="balance-value">1 250 ₴</span></div>
   </div>
- 
-  <div class="cases-grid" id="cases-grid">
-    <!-- Кейсы будут вставлены сюда через JS -->
-  </div>
- 
+
+  <div class="cases-grid" id="cases-grid"></div>
+
   <div class="bottom-nav">
     <div class="nav-item active">
       <div class="icon">🎁</div>
@@ -152,39 +364,83 @@
       <div>Профиль</div>
     </div>
   </div>
- 
+
+  <div class="open-screen" id="open-screen">
+    <div class="open-header">
+      <button class="back-btn" id="back-btn">←</button>
+      <div class="title" id="open-title">Кейс</div>
+    </div>
+
+    <div class="case-preview">
+      <img id="open-case-img" src="" alt="">
+    </div>
+
+    <div class="roulette-wrap">
+      <div class="roulette-pointer"></div>
+      <div class="roulette-strip" id="roulette-strip"></div>
+    </div>
+
+    <button class="spin-btn" id="spin-btn">Открыть</button>
+  </div>
+
+  <div class="result-modal" id="result-modal">
+    <div class="result-card">
+      <div class="label">Вы получили:</div>
+      <img id="result-img" src="" alt="">
+      <div class="item-name" id="result-name"></div>
+      <div class="item-value" id="result-value"></div>
+      <div class="result-actions">
+        <button class="btn-primary" id="btn-again">Открыть ещё раз</button>
+        <button class="btn-secondary" id="btn-inventory">Добавить в инвентарь</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Инициализация Telegram Mini App
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
       tg.expand();
     }
- 
-    // Список кейсов
+
     const cases = [
       {
         id: "gold",
         name: "Штурмовой Арсенал",
         price: 50,
-        image: "images/case-gold.png"
+        image: "images/case-gold.png",
+        items: [
+          { name: "АК-47 | Снежный камуфляж", image: "images/skin-ak-white.png", rarity: "common", weight: 60, value: 40 },
+          { name: "АК-47 | Ледяная синь", image: "images/skin-ak-blue.png", rarity: "rare", weight: 30, value: 90 },
+          { name: "АК-47 | Лесной хаос", image: "images/skin-ak-camo.png", rarity: "epic", weight: 10, value: 220 }
+        ]
       },
       {
         id: "platinum",
         name: "Клинок Императора",
         price: 200,
-        image: "images/case-platinum.png"
+        image: "images/case-platinum.png",
+        items: [
+          { name: "Керамбит-крюк | Танзанит", image: "images/skin-knife-hook.png", rarity: "rare", weight: 50, value: 350 },
+          { name: "Штык-нож | Морская глубина", image: "images/skin-knife-blue.png", rarity: "epic", weight: 35, value: 700 },
+          { name: "Клинок | Северное сияние", image: "images/skin-knife-gradient.png", rarity: "legendary", weight: 15, value: 1500 }
+        ]
       },
       {
         id: "silver",
         name: "Тайный Агент",
         price: 30,
-        image: "images/case-silver.png"
+        image: "images/case-silver.png",
+        items: [
+          { name: "Beretta | Лесная тень", image: "images/skin-beretta.png", rarity: "common", weight: 50, value: 20 },
+          { name: "Glock | Радужный отблеск", image: "images/skin-glock.png", rarity: "common", weight: 30, value: 35 },
+          { name: "USP-S | Алый шёпот", image: "images/skin-usp-red.png", rarity: "rare", weight: 15, value: 80 },
+          { name: "USP-S | Золотой монстр", image: "images/skin-usp-gold.png", rarity: "legendary", weight: 5, value: 300 }
+        ]
       }
     ];
- 
+
     const grid = document.getElementById("cases-grid");
- 
     cases.forEach(c => {
       const card = document.createElement("div");
       card.className = "case-card";
@@ -193,13 +449,108 @@
         <div class="case-name">${c.name}</div>
         <div class="case-price">${c.price} ₴</div>
       `;
-      card.addEventListener("click", () => {
-        // Пока просто заглушка — позже тут будет открытие кейса
-        alert(`Скоро тут будет открытие кейса "${c.name}"`);
-      });
+      card.addEventListener("click", () => openCaseScreen(c.id));
       grid.appendChild(card);
     });
+
+    const openScreen = document.getElementById("open-screen");
+    const backBtn = document.getElementById("back-btn");
+    const openTitle = document.getElementById("open-title");
+    const openCaseImg = document.getElementById("open-case-img");
+    const strip = document.getElementById("roulette-strip");
+    const spinBtn = document.getElementById("spin-btn");
+    const resultModal = document.getElementById("result-modal");
+    const resultImg = document.getElementById("result-img");
+    const resultName = document.getElementById("result-name");
+    const resultValue = document.getElementById("result-value");
+
+    let currentCase = null;
+    const ITEM_SLOT = 120;
+
+    function openCaseScreen(caseId) {
+      currentCase = cases.find(c => c.id === caseId);
+      openTitle.textContent = currentCase.name;
+      openCaseImg.src = currentCase.image;
+      spinBtn.disabled = false;
+      spinBtn.textContent = `Открыть за ${currentCase.price} ₴`;
+      strip.innerHTML = "";
+      strip.style.transition = "none";
+      strip.style.transform = "translateX(0px)";
+      openScreen.classList.add("active");
+    }
+
+    backBtn.addEventListener("click", () => {
+      openScreen.classList.remove("active");
+    });
+
+    function pickWinner(items) {
+      const total = items.reduce((sum, i) => sum + i.weight, 0);
+      let rnd = Math.random() * total;
+      for (const item of items) {
+        if (rnd < item.weight) return item;
+        rnd -= item.weight;
+      }
+      return items[items.length - 1];
+    }
+
+    function buildStrip(items, winner) {
+      strip.innerHTML = "";
+      const REEL_LENGTH = 40;
+      const WIN_INDEX = 34;
+
+      for (let i = 0; i < REEL_LENGTH; i++) {
+        const itemData = i === WIN_INDEX ? winner : items[Math.floor(Math.random() * items.length)];
+        const el = document.createElement("div");
+        el.className = `roulette-item rarity-${itemData.rarity}`;
+        el.innerHTML = `<img src="${itemData.image}" alt="${itemData.name}">`;
+        if (i === WIN_INDEX) el.id = "winner-item";
+        strip.appendChild(el);
+      }
+      return WIN_INDEX;
+    }
+
+    spinBtn.addEventListener("click", () => {
+      spinBtn.disabled = true;
+      const winner = pickWinner(currentCase.items);
+      const winIndex = buildStrip(currentCase.items, winner);
+
+      const wrapWidth = document.querySelector(".roulette-wrap").offsetWidth;
+      const randomOffset = Math.random() * 60 - 30;
+      const targetX = -(winIndex * ITEM_SLOT + ITEM_SLOT / 2 - wrapWidth / 2) + randomOffset;
+
+      strip.style.transition = "none";
+      strip.style.transform = "translateX(0px)";
+      void strip.offsetWidth;
+
+      strip.style.transition = "transform 5.5s cubic-bezier(0.15, 0.85, 0.1, 1)";
+      strip.style.transform = `translateX(${targetX}px)`;
+
+      setTimeout(() => {
+        const winnerEl = document.getElementById("winner-item");
+        if (winnerEl) winnerEl.classList.add("winner");
+        showResult(winner);
+      }, 5600);
+    });
+
+    function showResult(item) {
+      resultImg.src = item.image;
+      resultName.textContent = item.name;
+      resultValue.textContent = `${item.value} ₴`;
+      resultModal.classList.add("active");
+    }
+
+    document.getElementById("btn-again").addEventListener("click", () => {
+      resultModal.classList.remove("active");
+      spinBtn.disabled = false;
+    });
+
+    document.getElementById("btn-inventory").addEventListener("click", () => {
+      resultModal.classList.remove("active");
+      openScreen.classList.remove("active");
+      spinBtn.disabled = false;
+      alert("Инвентарь появится, когда подключим базу данных 🙂");
+    });
   </script>
- 
+
 </body>
 </html>
