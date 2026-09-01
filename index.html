@@ -637,6 +637,18 @@
       color: #fff;
     }
 
+    .withdraw-status-badge {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      background: #23232c;
+      color: #ffb800;
+    }
+
     /* ===== Модалка вывода предмета ===== */
     .withdraw-modal {
       position: fixed;
@@ -1190,14 +1202,25 @@
         inventory.forEach(item => {
           const el = document.createElement("div");
           el.className = `inventory-item rarity-${item.rarity}`;
+
+          const statusLabels = {
+            pending: "⏳ Заявка отправлена, ожидай обработки",
+            accepted: "🔄 Заявка в процессе",
+            trade_sent: "📤 Трейд отправлен, прими его в Steam"
+          };
+
+          const actionsHtml = item.withdraw_status
+            ? `<div class="withdraw-status-badge">${statusLabels[item.withdraw_status] || "В обработке"}</div>`
+            : `<div class="inventory-actions">
+                 <button class="btn-sell" data-id="${item.id}" data-value="${item.value}">Продать за ${item.value} ₴</button>
+                 <button class="btn-withdraw" data-id="${item.id}" data-name="${item.item_name}">Вывести</button>
+               </div>`;
+
           el.innerHTML = `
             <img src="${item.item_image}" alt="${item.item_name}">
             <div class="item-name">${item.item_name}</div>
             <div class="item-value">${item.value} ₴</div>
-            <div class="inventory-actions">
-              <button class="btn-sell" data-id="${item.id}" data-value="${item.value}">Продать за ${item.value} ₴</button>
-              <button class="btn-withdraw" data-id="${item.id}" data-name="${item.item_name}">Вывести</button>
-            </div>
+            ${actionsHtml}
           `;
           invGrid.appendChild(el);
         });
@@ -1432,9 +1455,6 @@
     // Запускаем инициализацию приложения
     initApp();
   </script>
-
-</body>
-</html>
 
 </body>
 </html>
