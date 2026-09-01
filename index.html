@@ -609,6 +609,94 @@
       line-height: 1.5;
     }
 
+    /* ===== Кнопки действий в инвентаре ===== */
+    .inventory-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-sell, .btn-withdraw {
+      border: none;
+      border-radius: 8px;
+      padding: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-sell {
+      background: #23232c;
+      color: #fff;
+    }
+
+    .btn-withdraw {
+      background: linear-gradient(90deg, #4da6ff, #2f7fd6);
+      color: #fff;
+    }
+
+    /* ===== Модалка вывода предмета ===== */
+    .withdraw-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 250;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .withdraw-modal.active {
+      display: flex;
+    }
+
+    .withdraw-card {
+      background: #17171f;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 320px;
+      border: 1px solid #2a2a35;
+    }
+
+    .withdraw-card .withdraw-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .withdraw-card .withdraw-item {
+      font-size: 13px;
+      color: #888;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .withdraw-card input {
+      width: 100%;
+      background: #0e0e12;
+      border: 1px solid #2a2a35;
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .withdraw-card .withdraw-hint {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
     /* ===== Экран загрузки ===== */
     .loading-screen {
       position: fixed;
@@ -782,6 +870,20 @@
       <div class="icon">📜</div>
       <div>Пока пусто</div>
       <div style="font-size:12px; margin-top:4px;">Здесь появятся все твои открытия кейсов</div>
+    </div>
+  </div>
+
+  <!-- Модалка вывода предмета -->
+  <div class="withdraw-modal" id="withdraw-modal">
+    <div class="withdraw-card">
+      <div class="withdraw-title">Вывод предмета</div>
+      <div class="withdraw-item" id="withdraw-item-name"></div>
+      <input type="text" id="withdraw-link-input" placeholder="Ссылка на трейд Steam">
+      <div class="withdraw-hint">Предмет будет отправлен вручную владельцем проекта после проверки заявки — это может занять некоторое время.</div>
+      <div class="result-actions">
+        <button class="btn-primary" id="withdraw-submit-btn">Отправить заявку</button>
+        <button class="btn-secondary" id="withdraw-cancel-btn">Отмена</button>
+      </div>
     </div>
   </div>
 
@@ -1092,8 +1194,21 @@
             <img src="${item.item_image}" alt="${item.item_name}">
             <div class="item-name">${item.item_name}</div>
             <div class="item-value">${item.value} ₴</div>
+            <div class="inventory-actions">
+              <button class="btn-sell" data-id="${item.id}" data-value="${item.value}">Продать за ${item.value} ₴</button>
+              <button class="btn-withdraw" data-id="${item.id}" data-name="${item.item_name}">Вывести</button>
+            </div>
           `;
           invGrid.appendChild(el);
+        });
+
+        // Кнопки "Продать"
+        invGrid.querySelectorAll(".btn-sell").forEach(btn => {
+          btn.addEventListener("click", () => sellItem(btn.dataset.id));
+        });
+        // Кнопки "Вывести"
+        invGrid.querySelectorAll(".btn-withdraw").forEach(btn => {
+          btn.addEventListener("click", () => openWithdrawModal(btn.dataset.id, btn.dataset.name));
         });
       } catch (err) {
         console.error(err);
@@ -1238,6 +1353,79 @@
       } catch (err) {
         console.error(err);
         alert("Не удалось добавить предмет, попробуй ещё раз");
+      }
+    });
+
+    // ===== Продажа предмета обратно на баланс =====
+    async function sellItem(itemId) {
+      if (!confirm("Продать этот предмет обратно на баланс?")) return;
+      try {
+        const res = await fetch(`${API_URL}/api/inventory/sell`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telegram_id: currentUser.telegram_id, item_id: itemId })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || "Не удалось продать предмет");
+          return;
+        }
+        const data = await res.json();
+        currentUser.balance = data.newBalance;
+        updateBalanceDisplay();
+        renderInventory();
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером");
+      }
+    }
+
+    // ===== Вывод предмета =====
+    const withdrawModal = document.getElementById("withdraw-modal");
+    const withdrawItemName = document.getElementById("withdraw-item-name");
+    const withdrawLinkInput = document.getElementById("withdraw-link-input");
+    const withdrawSubmitBtn = document.getElementById("withdraw-submit-btn");
+    const withdrawCancelBtn = document.getElementById("withdraw-cancel-btn");
+    let withdrawItemId = null;
+
+    function openWithdrawModal(itemId, itemName) {
+      withdrawItemId = itemId;
+      withdrawItemName.textContent = itemName;
+      withdrawLinkInput.value = "";
+      withdrawModal.classList.add("active");
+    }
+
+    withdrawCancelBtn.addEventListener("click", () => {
+      withdrawModal.classList.remove("active");
+    });
+
+    withdrawSubmitBtn.addEventListener("click", async () => {
+      const tradeLink = withdrawLinkInput.value.trim();
+      if (!tradeLink) {
+        alert("Укажи ссылку на трейд Steam");
+        return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/api/inventory/withdraw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: currentUser.telegram_id,
+            item_id: withdrawItemId,
+            trade_link: tradeLink
+          })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || "Не удалось отправить заявку");
+          return;
+        }
+        withdrawModal.classList.remove("active");
+        alert("Заявка на вывод отправлена! Владелец проекта обработает её вручную 🙂");
+        renderInventory();
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером");
       }
     });
 
