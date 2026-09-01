@@ -608,13 +608,54 @@
       text-align: center;
       line-height: 1.5;
     }
+
+    /* ===== Экран загрузки ===== */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0e0e12;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .loading-screen .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #24242e;
+      border-top-color: #ffb800;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-screen .loading-text {
+      font-size: 13px;
+      color: #888;
+      text-align: center;
+      padding: 0 30px;
+    }
   </style>
 </head>
 <body>
 
+  <div class="loading-screen" id="loading-screen">
+    <div class="spinner"></div>
+    <div class="loading-text">Подключаемся к серверу...<br>Если сервер "спал" — это может занять до минуты</div>
+  </div>
+
   <div class="header">
     <div class="logo">🎁 CS Cases</div>
-    <div class="balance">💰 <span id="balance-value">0 ₴</span></div>
+    <div class="balance">💰 <span id="balance-value">— ₴</span></div>
   </div>
 
   <!-- Вкладка: Кейсы -->
@@ -727,7 +768,7 @@
       <div class="topup-option" data-amount="500"><div class="amount">500 ₴</div></div>
       <div class="topup-option" data-amount="1000"><div class="amount">1000 ₴</div></div>
     </div>
-    <div class="topup-note">Это демо-режим — реальная оплата подключится позже. Пока сумма просто добавляется к балансу для теста.</div>
+    <div class="topup-note">Это демо-режим — реальная оплата подключится позже. Пока сумма добавляется к балансу в базе данных для теста.</div>
   </div>
 
   <!-- Экран истории открытий -->
@@ -764,6 +805,11 @@
       tg.expand();
     }
 
+    // Адрес твоего сервера
+    const API_URL = "https://cs-cases-backend.onrender.com";
+
+    // Описание кейсов нужно на фронтенде только для отображения (картинки, названия, цена).
+    // Реальный результат открытия всегда решает сервер.
     const cases = [
       {
         id: "gold",
@@ -771,9 +817,9 @@
         price: 50,
         image: "images/case-gold.png",
         items: [
-          { name: "АК-47 | Снежный камуфляж", image: "images/skin-ak-white.png", rarity: "common", weight: 60, value: 40 },
-          { name: "АК-47 | Ледяная синь", image: "images/skin-ak-blue.png", rarity: "rare", weight: 30, value: 90 },
-          { name: "АК-47 | Лесной хаос", image: "images/skin-ak-camo.png", rarity: "epic", weight: 10, value: 220 }
+          { name: "АК-47 | Снежный камуфляж", image: "images/skin-ak-white.png", rarity: "common" },
+          { name: "АК-47 | Ледяная синь", image: "images/skin-ak-blue.png", rarity: "rare" },
+          { name: "АК-47 | Лесной хаос", image: "images/skin-ak-camo.png", rarity: "epic" }
         ]
       },
       {
@@ -782,9 +828,9 @@
         price: 200,
         image: "images/case-platinum.png",
         items: [
-          { name: "Керамбит-крюк | Танзанит", image: "images/skin-knife-hook.png", rarity: "rare", weight: 50, value: 350 },
-          { name: "Штык-нож | Морская глубина", image: "images/skin-knife-blue.png", rarity: "epic", weight: 35, value: 700 },
-          { name: "Клинок | Северное сияние", image: "images/skin-knife-gradient.png", rarity: "legendary", weight: 15, value: 1500 }
+          { name: "Керамбит-крюк | Танзанит", image: "images/skin-knife-hook.png", rarity: "rare" },
+          { name: "Штык-нож | Морская глубина", image: "images/skin-knife-blue.png", rarity: "epic" },
+          { name: "Клинок | Северное сияние", image: "images/skin-knife-gradient.png", rarity: "legendary" }
         ]
       },
       {
@@ -793,76 +839,114 @@
         price: 30,
         image: "images/case-silver.png",
         items: [
-          { name: "Beretta | Лесная тень", image: "images/skin-beretta.png", rarity: "common", weight: 50, value: 20 },
-          { name: "Glock | Радужный отблеск", image: "images/skin-glock.png", rarity: "common", weight: 30, value: 35 },
-          { name: "USP-S | Алый шёпот", image: "images/skin-usp-red.png", rarity: "rare", weight: 15, value: 80 },
-          { name: "USP-S | Золотой монстр", image: "images/skin-usp-gold.png", rarity: "legendary", weight: 5, value: 300 }
+          { name: "Beretta | Лесная тень", image: "images/skin-beretta.png", rarity: "common" },
+          { name: "Glock | Радужный отблеск", image: "images/skin-glock.png", rarity: "common" },
+          { name: "USP-S | Алый шёпот", image: "images/skin-usp-red.png", rarity: "rare" },
+          { name: "USP-S | Золотой монстр", image: "images/skin-usp-gold.png", rarity: "legendary" }
         ]
       }
     ];
 
-    // Данные, которые пока хранятся только в памяти браузера (сбрасываются при перезапуске)
-    let balance = 1250;
-    let inventory = [];
-    let history = [];
-    let casesOpenedCount = 0;
+    let currentUser = null; // { telegram_id, balance, ... }
 
     function formatMoney(n) {
-      return n.toLocaleString("ru-RU") + " ₴";
+      return Number(n).toLocaleString("ru-RU") + " ₴";
     }
 
     function updateBalanceDisplay() {
-      document.getElementById("balance-value").textContent = formatMoney(balance);
+      document.getElementById("balance-value").textContent = formatMoney(currentUser.balance);
     }
-    updateBalanceDisplay();
+
+    // ===== Получаем ID пользователя из Telegram =====
+    function getTelegramUser() {
+      const tgUser = tg?.initDataUnsafe?.user;
+      if (tgUser) return tgUser;
+      // Если открыто не в Telegram (тест в обычном браузере) — используем тестового пользователя
+      return { id: 1000000, first_name: "Тест", last_name: "Игрок", username: "test_player" };
+    }
+
+    // ===== Инициализация: регистрируем/получаем пользователя с сервера =====
+    async function initApp() {
+      try {
+        const tgUser = getTelegramUser();
+
+        const res = await fetch(`${API_URL}/api/user`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: tgUser.id,
+            first_name: tgUser.first_name,
+            username: tgUser.username
+          })
+        });
+
+        if (!res.ok) throw new Error("Сервер вернул ошибку");
+        currentUser = await res.json();
+
+        initProfile(tgUser);
+        updateBalanceDisplay();
+        renderCasesGrid();
+
+        document.getElementById("loading-screen").style.display = "none";
+      } catch (err) {
+        console.error(err);
+        document.querySelector(".loading-text").innerHTML =
+          "Не удалось подключиться к серверу 😔<br>Проверь соединение и попробуй перезайти";
+      }
+    }
 
     // ===== Рендер сетки кейсов =====
-    const grid = document.getElementById("cases-grid");
-    cases.forEach(c => {
-      const card = document.createElement("div");
-      card.className = "case-card";
-      card.innerHTML = `
-        <img src="${c.image}" alt="${c.name}">
-        <div class="case-name">${c.name}</div>
-        <div class="case-price">${c.price} ₴</div>
-      `;
-      card.addEventListener("click", () => openCaseScreen(c.id));
-      grid.appendChild(card);
-    });
+    function renderCasesGrid() {
+      const grid = document.getElementById("cases-grid");
+      grid.innerHTML = "";
+      cases.forEach(c => {
+        const card = document.createElement("div");
+        card.className = "case-card";
+        card.innerHTML = `
+          <img src="${c.image}" alt="${c.name}">
+          <div class="case-name">${c.name}</div>
+          <div class="case-price">${c.price} ₴</div>
+        `;
+        card.addEventListener("click", () => openCaseScreen(c.id));
+        grid.appendChild(card);
+      });
+    }
 
-    // ===== Профиль: подтягиваем данные из Telegram, если есть =====
-    function initProfile() {
+    // ===== Профиль =====
+    function initProfile(tgUser) {
       const avatarEl = document.getElementById("profile-avatar");
       const nameEl = document.getElementById("profile-name");
       const usernameEl = document.getElementById("profile-username");
 
-      const tgUser = tg?.initDataUnsafe?.user;
+      const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
+      nameEl.textContent = fullName || "Игрок";
+      usernameEl.textContent = tgUser.username ? `@${tgUser.username}` : "";
 
-      if (tgUser) {
-        const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
-        nameEl.textContent = fullName || "Игрок";
-        usernameEl.textContent = tgUser.username ? `@${tgUser.username}` : "";
-
-        if (tgUser.photo_url) {
-          avatarEl.innerHTML = `<img src="${tgUser.photo_url}" alt="avatar">`;
-        } else {
-          avatarEl.textContent = (fullName[0] || "И").toUpperCase();
-        }
+      if (tgUser.photo_url) {
+        avatarEl.innerHTML = `<img src="${tgUser.photo_url}" alt="avatar">`;
       } else {
-        nameEl.textContent = "Игрок";
-        usernameEl.textContent = "";
-        avatarEl.textContent = "И";
+        avatarEl.textContent = (fullName[0] || "И").toUpperCase();
       }
     }
-    initProfile();
 
-    function updateProfileStats() {
-      document.getElementById("stat-opened").textContent = casesOpenedCount;
-      const totalEarned = inventory.reduce((sum, i) => sum + i.value, 0);
-      document.getElementById("stat-earned").textContent = formatMoney(totalEarned);
+    async function updateProfileStats() {
+      try {
+        const [historyRes, inventoryRes] = await Promise.all([
+          fetch(`${API_URL}/api/history/${currentUser.telegram_id}`),
+          fetch(`${API_URL}/api/inventory/${currentUser.telegram_id}`)
+        ]);
+        const history = await historyRes.json();
+        const inventory = await inventoryRes.json();
+
+        document.getElementById("stat-opened").textContent = history.length;
+        const totalEarned = inventory.reduce((sum, i) => sum + i.value, 0);
+        document.getElementById("stat-earned").textContent = formatMoney(totalEarned);
+      } catch (err) {
+        console.error(err);
+      }
     }
 
-    // ===== Переключение вкладок (нижнее меню) =====
+    // ===== Переключение вкладок =====
     const tabCases = document.getElementById("tab-cases");
     const tabInventory = document.getElementById("tab-inventory");
     const tabProfile = document.getElementById("tab-profile");
@@ -901,92 +985,119 @@
       topupScreen.classList.remove("active");
     });
     document.querySelectorAll(".topup-option").forEach(opt => {
-      opt.addEventListener("click", () => {
+      opt.addEventListener("click", async () => {
         const amount = parseInt(opt.dataset.amount, 10);
-        balance += amount;
-        updateBalanceDisplay();
-        topupScreen.classList.remove("active");
-        alert(`Баланс пополнен на ${amount} ₴ (демо-режим)`);
+        try {
+          const res = await fetch(`${API_URL}/api/topup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ telegram_id: currentUser.telegram_id, amount })
+          });
+          const data = await res.json();
+          currentUser.balance = data.newBalance;
+          updateBalanceDisplay();
+          topupScreen.classList.remove("active");
+          alert(`Баланс пополнен на ${amount} ₴ (демо-режим)`);
+        } catch (err) {
+          console.error(err);
+          alert("Не удалось пополнить баланс, попробуй ещё раз");
+        }
       });
     });
 
     // ===== История открытий =====
     const historyScreen = document.getElementById("history-screen");
-    document.getElementById("menu-history").addEventListener("click", () => {
-      renderHistory();
+    document.getElementById("menu-history").addEventListener("click", async () => {
       historyScreen.classList.add("active");
+      await renderHistory();
     });
     document.getElementById("history-back-btn").addEventListener("click", () => {
       historyScreen.classList.remove("active");
     });
 
-    function renderHistory() {
+    async function renderHistory() {
       const list = document.getElementById("history-list");
       const empty = document.getElementById("history-empty");
-      list.innerHTML = "";
 
-      if (history.length === 0) {
-        empty.style.display = "block";
-        list.style.display = "none";
-        return;
+      try {
+        const res = await fetch(`${API_URL}/api/history/${currentUser.telegram_id}`);
+        const history = await res.json();
+
+        list.innerHTML = "";
+        if (history.length === 0) {
+          empty.style.display = "block";
+          list.style.display = "none";
+          return;
+        }
+        empty.style.display = "none";
+        list.style.display = "flex";
+
+        history.forEach(entry => {
+          const timeStr = new Date(entry.opened_at).toLocaleString("ru-RU", {
+            day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+          });
+          const row = document.createElement("div");
+          row.className = "history-row";
+          row.innerHTML = `
+            <img src="${entry.item_image}" alt="${entry.item_name}">
+            <div class="history-info">
+              <div class="history-item-name">${entry.item_name}</div>
+              <div class="history-case-name">${entry.case_name} · ${timeStr}</div>
+            </div>
+            <div class="history-value">${entry.value} ₴</div>
+          `;
+          list.appendChild(row);
+        });
+      } catch (err) {
+        console.error(err);
       }
-      empty.style.display = "none";
-      list.style.display = "flex";
-
-      // Показываем сначала самые свежие открытия
-      [...history].reverse().forEach(entry => {
-        const row = document.createElement("div");
-        row.className = "history-row";
-        row.innerHTML = `
-          <img src="${entry.item.image}" alt="${entry.item.name}">
-          <div class="history-info">
-            <div class="history-item-name">${entry.item.name}</div>
-            <div class="history-case-name">${entry.caseName} · ${entry.time}</div>
-          </div>
-          <div class="history-value">${entry.item.value} ₴</div>
-        `;
-        list.appendChild(row);
-      });
     }
 
-    // Пункты меню профиля без отдельной логики — заглушка
+    // Заглушки для остальных пунктов меню профиля
     document.querySelectorAll(".menu-item:not(#menu-topup):not(#menu-history)").forEach(item => {
       item.addEventListener("click", () => {
         alert("Эта функция появится на следующих этапах 🙂");
       });
     });
 
-    // ===== Рендер инвентаря =====
-    function renderInventory() {
+    // ===== Инвентарь =====
+    async function renderInventory() {
       const invGrid = document.getElementById("inventory-grid");
       const invEmpty = document.getElementById("inventory-empty");
       const invCount = document.getElementById("inventory-count");
       const invTotal = document.getElementById("inventory-total");
 
-      invGrid.innerHTML = "";
-      invCount.textContent = inventory.length;
-      const total = inventory.reduce((sum, i) => sum + i.value, 0);
-      invTotal.textContent = formatMoney(total);
+      try {
+        const res = await fetch(`${API_URL}/api/inventory/${currentUser.telegram_id}`);
+        const inventory = await res.json();
 
-      if (inventory.length === 0) {
-        invEmpty.style.display = "block";
-        invGrid.style.display = "none";
-        return;
+        invGrid.innerHTML = "";
+        invCount.textContent = inventory.length;
+        const total = inventory.reduce((sum, i) => sum + i.value, 0);
+        invTotal.textContent = formatMoney(total);
+
+        if (inventory.length === 0) {
+          invEmpty.style.display = "block";
+          invGrid.style.display = "none";
+          return;
+        }
+
+        invEmpty.style.display = "none";
+        invGrid.style.display = "grid";
+
+        inventory.forEach(item => {
+          const el = document.createElement("div");
+          el.className = `inventory-item rarity-${item.rarity}`;
+          el.innerHTML = `
+            <img src="${item.item_image}" alt="${item.item_name}">
+            <div class="item-name">${item.item_name}</div>
+            <div class="item-value">${item.value} ₴</div>
+          `;
+          invGrid.appendChild(el);
+        });
+      } catch (err) {
+        console.error(err);
       }
-
-      invEmpty.style.display = "none";
-      invGrid.style.display = "grid";
-
-      inventory.forEach(item => {
-        const el = document.createElement("div");
-        el.className = `inventory-item rarity-${item.rarity}`;
-        el.innerHTML = `
-          <img src="${item.image}" alt="${item.name}">
-          <div class="item-name">${item.name}</div>
-          <div class="item-value">${item.value} ₴</div>
-        `;
-        invGrid.appendChild(el);
-      });
     }
 
     // ===== Логика открытия кейса =====
@@ -1022,16 +1133,7 @@
       openScreen.classList.remove("active");
     });
 
-    function pickWinner(items) {
-      const total = items.reduce((sum, i) => sum + i.weight, 0);
-      let rnd = Math.random() * total;
-      for (const item of items) {
-        if (rnd < item.weight) return item;
-        rnd -= item.weight;
-      }
-      return items[items.length - 1];
-    }
-
+    // Заполняем ленту "мусорными" предметами для визуального эффекта + вставляем реального победителя в фиксированную позицию
     function buildStrip(items, winner) {
       strip.innerHTML = "";
       const REEL_LENGTH = 40;
@@ -1048,43 +1150,52 @@
       return WIN_INDEX;
     }
 
-    spinBtn.addEventListener("click", () => {
-      // Проверка баланса перед открытием
-      if (balance < currentCase.price) {
-        alert("Недостаточно средств на балансе. Пополни баланс в профиле 💳");
-        return;
-      }
-
-      balance -= currentCase.price;
-      updateBalanceDisplay();
-
+    spinBtn.addEventListener("click", async () => {
       spinBtn.disabled = true;
-      casesOpenedCount++;
-      const winner = pickWinner(currentCase.items);
-      const winIndex = buildStrip(currentCase.items, winner);
 
-      const wrapWidth = document.querySelector(".roulette-wrap").offsetWidth;
-      const randomOffset = Math.random() * 60 - 30;
-      const targetX = -(winIndex * ITEM_SLOT + ITEM_SLOT / 2 - wrapWidth / 2) + randomOffset;
+      try {
+        // Спрашиваем у сервера, что реально выпало — вся логика и честность на его стороне
+        const res = await fetch(`${API_URL}/api/open-case`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telegram_id: currentUser.telegram_id, case_id: currentCase.id })
+        });
 
-      strip.style.transition = "none";
-      strip.style.transform = "translateX(0px)";
-      void strip.offsetWidth;
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || "Не удалось открыть кейс");
+          spinBtn.disabled = false;
+          return;
+        }
 
-      strip.style.transition = "transform 5.5s cubic-bezier(0.15, 0.85, 0.1, 1)";
-      strip.style.transform = `translateX(${targetX}px)`;
+        const data = await res.json();
+        const winner = data.item; // { name, image, rarity, value }
+        currentUser.balance = data.newBalance;
+        updateBalanceDisplay();
 
-      setTimeout(() => {
-        const winnerEl = document.getElementById("winner-item");
-        if (winnerEl) winnerEl.classList.add("winner");
+        const winIndex = buildStrip(currentCase.items, winner);
 
-        // Записываем в историю сразу при получении приза
-        const now = new Date();
-        const timeStr = now.toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-        history.push({ item: winner, caseName: currentCase.name, time: timeStr });
+        const wrapWidth = document.querySelector(".roulette-wrap").offsetWidth;
+        const randomOffset = Math.random() * 60 - 30;
+        const targetX = -(winIndex * ITEM_SLOT + ITEM_SLOT / 2 - wrapWidth / 2) + randomOffset;
 
-        showResult(winner);
-      }, 5600);
+        strip.style.transition = "none";
+        strip.style.transform = "translateX(0px)";
+        void strip.offsetWidth;
+
+        strip.style.transition = "transform 5.5s cubic-bezier(0.15, 0.85, 0.1, 1)";
+        strip.style.transform = `translateX(${targetX}px)`;
+
+        setTimeout(() => {
+          const winnerEl = document.getElementById("winner-item");
+          if (winnerEl) winnerEl.classList.add("winner");
+          showResult(winner);
+        }, 5600);
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером, попробуй ещё раз");
+        spinBtn.disabled = false;
+      }
     });
 
     function showResult(item) {
@@ -1102,20 +1213,40 @@
       spinBtn.disabled = false;
     });
 
-    btnInventory.addEventListener("click", () => {
-      if (pendingItem) {
-        inventory.push(pendingItem);
+    btnInventory.addEventListener("click", async () => {
+      if (!pendingItem) return;
+      try {
+        await fetch(`${API_URL}/api/inventory/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: currentUser.telegram_id,
+            item_name: pendingItem.name,
+            item_image: pendingItem.image,
+            rarity: pendingItem.rarity,
+            value: pendingItem.value
+          })
+        });
         pendingItem = null;
+        btnInventory.disabled = true;
+        btnInventory.textContent = "Добавлено ✓";
+        setTimeout(() => {
+          resultModal.classList.remove("active");
+          openScreen.classList.remove("active");
+          spinBtn.disabled = false;
+        }, 500);
+      } catch (err) {
+        console.error(err);
+        alert("Не удалось добавить предмет, попробуй ещё раз");
       }
-      btnInventory.disabled = true;
-      btnInventory.textContent = "Добавлено ✓";
-      setTimeout(() => {
-        resultModal.classList.remove("active");
-        openScreen.classList.remove("active");
-        spinBtn.disabled = false;
-      }, 500);
     });
+
+    // Запускаем инициализацию приложения
+    initApp();
   </script>
+
+</body>
+</html>
 
 </body>
 </html>
