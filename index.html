@@ -489,6 +489,69 @@
       opacity: 0.5;
     }
 
+    /* ===== Список возможных предметов (шансы выпадения) ===== */
+    .drops-section {
+      padding: 6px 16px 24px;
+    }
+
+    .drops-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .drops-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .drop-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #17171f;
+      border: 2px solid #24242e;
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+
+    .drop-row img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .drop-row .drop-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .drop-row .drop-name {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .drop-row .drop-value {
+      font-size: 11px;
+      color: #ffb800;
+      font-weight: 600;
+    }
+
+    .drop-row .drop-chance {
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      flex-shrink: 0;
+    }
+
     .result-modal {
       position: fixed;
       top: 0;
@@ -854,6 +917,11 @@
     </div>
 
     <button class="spin-btn" id="spin-btn">Открыть</button>
+
+    <div class="drops-section">
+      <div class="drops-title">Возможные предметы</div>
+      <div class="drops-list" id="drops-list"></div>
+    </div>
   </div>
 
   <!-- Экран пополнения баланса -->
@@ -931,12 +999,12 @@
         price: 90,
         image: "images/case-anomaly.png",
         items: [
-          { name: "Desert Eagle | Firebreathing", image: "images/skin-deagle-fire.png", rarity: "common" },
-          { name: "PP-Bizon | Чертёж объекта", image: "images/skin-bizon-blueprint.png", rarity: "common" },
-          { name: "ПП-19 Бизон | Предатель", image: "images/skin-bizon-traitor.png", rarity: "rare" },
-          { name: "R8 Revolver | Cobalt Grip", image: "images/skin-r8-cobalt.png", rarity: "rare" },
-          { name: "AWP | Chromatic Aberration", image: "images/skin-awp-chromatic.png", rarity: "epic" },
-          { name: "Керамбит | Ультрафиолет", image: "images/skin-karambit-uv.png", rarity: "legendary" }
+          { name: "Desert Eagle | Firebreathing", image: "images/skin-deagle-fire.png", rarity: "common", weight: 35, value: 45 },
+          { name: "PP-Bizon | Чертёж объекта", image: "images/skin-bizon-blueprint.png", rarity: "common", weight: 30, value: 55 },
+          { name: "ПП-19 Бизон | Предатель", image: "images/skin-bizon-traitor.png", rarity: "rare", weight: 18, value: 130 },
+          { name: "R8 Revolver | Cobalt Grip", image: "images/skin-r8-cobalt.png", rarity: "rare", weight: 10, value: 160 },
+          { name: "AWP | Chromatic Aberration", image: "images/skin-awp-chromatic.png", rarity: "epic", weight: 5, value: 480 },
+          { name: "Керамбит | Ультрафиолет", image: "images/skin-karambit-uv.png", rarity: "legendary", weight: 2, value: 1350 }
         ]
       },
       {
@@ -945,11 +1013,11 @@
         price: 60,
         image: "images/case-blood-mark.png",
         items: [
-          { name: "Glock-18 | Карамельное яблоко", image: "images/skin-glock-candy.png", rarity: "common" },
-          { name: "MAG-7 | Разрушение ядра", image: "images/skin-mag7-core.png", rarity: "common" },
-          { name: "CZ75-Auto | Настоящий змееяд", image: "images/skin-cz75-viper.png", rarity: "rare" },
-          { name: "G3SG1 | Red Jasper", image: "images/skin-g3sg1-jasper.png", rarity: "epic" },
-          { name: "AWP | Градиент", image: "images/skin-awp-gradient.png", rarity: "legendary" }
+          { name: "Glock-18 | Карамельное яблоко", image: "images/skin-glock-candy.png", rarity: "common", weight: 35, value: 30 },
+          { name: "MAG-7 | Разрушение ядра", image: "images/skin-mag7-core.png", rarity: "common", weight: 27, value: 45 },
+          { name: "CZ75-Auto | Настоящий змееяд", image: "images/skin-cz75-viper.png", rarity: "rare", weight: 20, value: 110 },
+          { name: "G3SG1 | Red Jasper", image: "images/skin-g3sg1-jasper.png", rarity: "epic", weight: 13, value: 320 },
+          { name: "AWP | Градиент", image: "images/skin-awp-gradient.png", rarity: "legendary", weight: 5, value: 900 }
         ]
       },
       {
@@ -958,11 +1026,11 @@
         price: 100,
         image: "images/case-blue-pulse.png",
         items: [
-          { name: "CZ75-Auto | Полуночная пальма", image: "images/skin-cz75-palm.png", rarity: "common" },
-          { name: "MAG-7 | Чайка", image: "images/skin-mag7-gull.png", rarity: "common" },
-          { name: "Negev | Сверхлёгкий", image: "images/skin-negev-light.png", rarity: "rare" },
-          { name: "AK-47 | Вулкан", image: "images/skin-ak-vulcan.png", rarity: "epic" },
-          { name: "Скелетный нож | Патина", image: "images/skin-skeleton-knife.png", rarity: "legendary" }
+          { name: "CZ75-Auto | Полуночная пальма", image: "images/skin-cz75-palm.png", rarity: "common", weight: 32, value: 35 },
+          { name: "MAG-7 | Чайка", image: "images/skin-mag7-gull.png", rarity: "common", weight: 28, value: 50 },
+          { name: "Negev | Сверхлёгкий", image: "images/skin-negev-light.png", rarity: "rare", weight: 20, value: 140 },
+          { name: "AK-47 | Вулкан", image: "images/skin-ak-vulcan.png", rarity: "epic", weight: 15, value: 520 },
+          { name: "Скелетный нож | Патина", image: "images/skin-skeleton-knife.png", rarity: "legendary", weight: 5, value: 1400 }
         ]
       }
     ];
@@ -1270,7 +1338,32 @@
       strip.innerHTML = "";
       strip.style.transition = "none";
       strip.style.transform = "translateX(0px)";
+      renderDropsList(currentCase);
       openScreen.classList.add("active");
+    }
+
+    // Список возможных предметов кейса с шансами выпадения — отсортирован от редкого к частому
+    function renderDropsList(caseData) {
+      const dropsList = document.getElementById("drops-list");
+      dropsList.innerHTML = "";
+
+      const totalWeight = caseData.items.reduce((sum, i) => sum + i.weight, 0);
+      const sortedItems = [...caseData.items].sort((a, b) => a.weight - b.weight);
+
+      sortedItems.forEach(item => {
+        const chance = ((item.weight / totalWeight) * 100).toFixed(1);
+        const row = document.createElement("div");
+        row.className = `drop-row rarity-${item.rarity}`;
+        row.innerHTML = `
+          <img src="${item.image}" alt="${item.name}">
+          <div class="drop-info">
+            <div class="drop-name">${item.name}</div>
+            <div class="drop-value">${item.value} ₴</div>
+          </div>
+          <div class="drop-chance">${chance}%</div>
+        `;
+        dropsList.appendChild(row);
+      });
     }
 
     backBtn.addEventListener("click", () => {
@@ -1461,6 +1554,9 @@
     // Запускаем инициализацию приложения
     initApp();
   </script>
+
+</body>
+</html>
 
 </body>
 </html>
