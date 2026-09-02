@@ -366,11 +366,34 @@
       left: 0;
       right: 0;
       bottom: 0;
+      height: 100vh;
+      height: 100dvh; /* учитывает реальную видимую высоту на мобильных, где браузерная панель "съедает" часть экрана */
       background: #0e0e12;
       z-index: 100;
       display: none;
       flex-direction: column;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #ffb800 #17171f;
+    }
+
+    /* Видимый скроллбар для мобильных браузеров на базе Chromium (внутри Telegram) */
+    .open-screen::-webkit-scrollbar, .secondary-screen::-webkit-scrollbar {
+      width: 5px;
+    }
+    .open-screen::-webkit-scrollbar-track, .secondary-screen::-webkit-scrollbar-track {
+      background: #17171f;
+    }
+    .open-screen::-webkit-scrollbar-thumb, .secondary-screen::-webkit-scrollbar-thumb {
+      background: #ffb800;
+      border-radius: 10px;
+    }
+
+    /* Без этого flex-контейнер сжимает блоки (например, рулетку), чтобы избежать прокрутки —
+       нам, наоборот, нужно, чтобы все блоки сохраняли размер, а лишнее уходило в скролл */
+    .open-screen > *, .secondary-screen > * {
+      flex-shrink: 0;
     }
 
     .open-screen.active, .secondary-screen.active {
@@ -402,14 +425,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px;
+      padding: 14px 16px;
     }
 
     .case-preview img {
-      width: 140px;
-      height: 120px;
+      width: 110px;
+      height: 95px;
       object-fit: contain;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .roulette-wrap {
@@ -493,6 +516,19 @@
     /* ===== Список возможных предметов (шансы выпадения) ===== */
     .drops-section {
       padding: 6px 16px 40px;
+    }
+
+    .scroll-hint {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      padding: 4px 0 10px;
+      animation: hintBounce 1.6s ease-in-out infinite;
+    }
+
+    @keyframes hintBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.6; }
+      50% { transform: translateY(4px); opacity: 1; }
     }
 
     .drops-title {
@@ -918,6 +954,8 @@
     </div>
 
     <button class="spin-btn" id="spin-btn">Открыть</button>
+
+    <div class="scroll-hint">↓ Листай вниз, чтобы увидеть все предметы</div>
 
     <div class="drops-section">
       <div class="drops-title">Возможные предметы</div>
@@ -1555,9 +1593,6 @@
     // Запускаем инициализацию приложения
     initApp();
   </script>
-
-</body>
-</html>
 
 </body>
 </html>
