@@ -683,31 +683,82 @@
     }
 
     /* ===== Пополнение баланса ===== */
-    .topup-amounts {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      padding: 20px 16px;
+    .topup-section-label {
+      padding: 16px 16px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    .topup-option {
+    .currency-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0 16px;
+    }
+
+    .currency-loading {
+      color: #666;
+      font-size: 13px;
+      padding: 10px 0;
+    }
+
+    .currency-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       background: #17171f;
       border: 2px solid #24242e;
-      border-radius: 14px;
-      padding: 20px 10px;
-      text-align: center;
+      border-radius: 12px;
+      padding: 12px 14px;
       cursor: pointer;
       transition: border-color 0.15s ease;
     }
 
-    .topup-option:active {
+    .currency-row.selected {
       border-color: #ffb800;
     }
 
-    .topup-option .amount {
-      font-size: 20px;
-      font-weight: 700;
-      color: #ffb800;
+    .currency-row .currency-label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .currency-row .currency-min {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .topup-input-wrap {
+      padding: 0 16px;
+    }
+
+    .topup-input-wrap input {
+      width: 100%;
+      background: #17171f;
+      border: 2px solid #24242e;
+      border-radius: 12px;
+      padding: 14px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .topup-input-wrap input:focus {
+      outline: none;
+      border-color: #ffb800;
+    }
+
+    .topup-min-hint {
+      font-size: 11px;
+      color: #666;
+      margin-top: 6px;
+    }
+
+    .topup-min-hint.error {
+      color: #ff5f5f;
     }
 
     .topup-note {
@@ -978,12 +1029,20 @@
       <button class="back-btn" id="topup-back-btn">←</button>
       <div class="title">Пополнить баланс</div>
     </div>
-    <div class="topup-amounts">
-      <div class="topup-option" data-amount="100"><div class="amount">100 ₴</div></div>
-      <div class="topup-option" data-amount="300"><div class="amount">300 ₴</div></div>
-      <div class="topup-option" data-amount="500"><div class="amount">500 ₴</div></div>
-      <div class="topup-option" data-amount="1000"><div class="amount">1000 ₴</div></div>
+
+    <div class="topup-section-label">Выбери криптовалюту</div>
+    <div class="currency-list" id="currency-list">
+      <div class="currency-loading">Загружаем актуальные курсы...</div>
     </div>
+
+    <div class="topup-section-label">Сумма пополнения</div>
+    <div class="topup-input-wrap">
+      <input type="number" id="topup-amount-input" placeholder="Введи сумму в ₴" inputmode="numeric">
+      <div class="topup-min-hint" id="topup-min-hint">Сначала выбери криптовалюту</div>
+    </div>
+
+    <button class="spin-btn" id="topup-submit-btn" style="margin: 16px;" disabled>Пополнить</button>
+
     <div class="topup-note">Оплата принимается криптовалютой на защищённой странице NOWPayments. После оплаты вернись сюда и нажми кнопку ниже — баланс обновится в течение пары минут после подтверждения платежа в сети.</div>
     <button class="btn-secondary" id="refresh-balance-btn" style="margin: 16px;">Проверить баланс</button>
   </div>
@@ -1215,12 +1274,23 @@
 
     // ===== Пополнение баланса (реальная оплата криптой через NOWPayments) =====
     const topupScreen = document.getElementById("topup-screen");
+    const currencyListEl = document.getElementById("currency-list");
+    const amountInput = document.getElementById("topup-amount-input");
+    const minHint = document.getElementById("topup-min-hint");
+    const topupSubmitBtn = document.getElementById("topup-submit-btn");
+
+    let availableCurrencies = [];
+    let selectedCurrency = null;
+    let currenciesLoaded = false;
+
     document.getElementById("menu-topup").addEventListener("click", () => {
       topupScreen.classList.add("active");
+      if (!currenciesLoaded) loadCurrencies();
     });
     document.getElementById("topup-back-btn").addEventListener("click", () => {
       topupScreen.classList.remove("active");
     });
+
     document.getElementById("refresh-balance-btn").addEventListener("click", async () => {
       const btn = document.getElementById("refresh-balance-btn");
       btn.textContent = "Проверяем...";
@@ -1245,35 +1315,100 @@
         alert("Не удалось проверить баланс, попробуй ещё раз");
       }
     });
-    document.querySelectorAll(".topup-option").forEach(opt => {
-      opt.addEventListener("click", async () => {
-        const amount = parseInt(opt.dataset.amount, 10);
-        opt.style.opacity = "0.5";
-        try {
-          const res = await fetch(`${API_URL}/api/payment/create`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ telegram_id: currentUser.telegram_id, amount_uah: amount })
-          });
-          const data = await res.json();
-          if (!res.ok || !data.invoice_url) {
-            alert(data.error || "Не удалось создать платёж, попробуй позже");
-            opt.style.opacity = "1";
-            return;
-          }
-          // Открываем страницу оплаты NOWPayments — внутри Telegram или в новой вкладке в браузере
-          if (tg?.openLink) {
-            tg.openLink(data.invoice_url);
-          } else {
-            window.open(data.invoice_url, "_blank");
-          }
-          topupScreen.classList.remove("active");
-        } catch (err) {
-          console.error(err);
-          alert("Ошибка соединения с сервером, попробуй ещё раз");
+
+    // Загружаем список криптовалют с их минимальными суммами (в ₴)
+    async function loadCurrencies() {
+      currencyListEl.innerHTML = `<div class="currency-loading">Загружаем актуальные курсы...</div>`;
+      try {
+        const res = await fetch(`${API_URL}/api/payment/currencies`);
+        availableCurrencies = await res.json();
+        currenciesLoaded = true;
+
+        if (!availableCurrencies.length) {
+          currencyListEl.innerHTML = `<div class="currency-loading">Не удалось загрузить валюты, попробуй позже</div>`;
+          return;
         }
-        opt.style.opacity = "1";
-      });
+
+        currencyListEl.innerHTML = "";
+        availableCurrencies.forEach(c => {
+          const row = document.createElement("div");
+          row.className = "currency-row";
+          row.innerHTML = `
+            <div class="currency-label">${c.label}</div>
+            <div class="currency-min">мин. ${c.min_uah} ₴</div>
+          `;
+          row.addEventListener("click", () => selectCurrency(c, row));
+          currencyListEl.appendChild(row);
+        });
+      } catch (err) {
+        console.error(err);
+        currencyListEl.innerHTML = `<div class="currency-loading">Ошибка загрузки, попробуй позже</div>`;
+      }
+    }
+
+    function selectCurrency(currency, rowEl) {
+      selectedCurrency = currency;
+      document.querySelectorAll(".currency-row").forEach(r => r.classList.remove("selected"));
+      rowEl.classList.add("selected");
+      minHint.textContent = `Минимальная сумма для этой валюты: ${currency.min_uah} ₴`;
+      minHint.classList.remove("error");
+      validateTopupForm();
+    }
+
+    function validateTopupForm() {
+      const amount = parseInt(amountInput.value, 10);
+      if (!selectedCurrency) {
+        topupSubmitBtn.disabled = true;
+        return;
+      }
+      if (!amount || amount < selectedCurrency.min_uah) {
+        minHint.textContent = `Минимум для ${selectedCurrency.label}: ${selectedCurrency.min_uah} ₴`;
+        minHint.classList.add("error");
+        topupSubmitBtn.disabled = true;
+        return;
+      }
+      minHint.classList.remove("error");
+      topupSubmitBtn.disabled = false;
+    }
+
+    amountInput.addEventListener("input", validateTopupForm);
+
+    topupSubmitBtn.addEventListener("click", async () => {
+      const amount = parseInt(amountInput.value, 10);
+      if (!selectedCurrency || !amount) return;
+
+      topupSubmitBtn.disabled = true;
+      topupSubmitBtn.textContent = "Создаём платёж...";
+      try {
+        const res = await fetch(`${API_URL}/api/payment/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: currentUser.telegram_id,
+            amount_uah: amount,
+            pay_currency: selectedCurrency.code
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.invoice_url) {
+          alert(data.error || "Не удалось создать платёж, попробуй позже");
+          topupSubmitBtn.disabled = false;
+          topupSubmitBtn.textContent = "Пополнить";
+          return;
+        }
+        // Открываем страницу оплаты NOWPayments — внутри Telegram или в новой вкладке в браузере
+        if (tg?.openLink) {
+          tg.openLink(data.invoice_url);
+        } else {
+          window.open(data.invoice_url, "_blank");
+        }
+        topupScreen.classList.remove("active");
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером, попробуй ещё раз");
+      }
+      topupSubmitBtn.disabled = false;
+      topupSubmitBtn.textContent = "Пополнить";
     });
 
     // ===== История открытий =====
