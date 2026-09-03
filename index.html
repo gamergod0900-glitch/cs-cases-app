@@ -467,6 +467,15 @@
       will-change: transform;
     }
 
+    .roulette-strip.idle-scroll {
+      animation: idleScroll 18s linear infinite;
+    }
+
+    @keyframes idleScroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
     .roulette-item {
       width: 110px;
       height: 110px;
@@ -1374,11 +1383,32 @@
       openCaseImg.src = currentCase.image;
       spinBtn.disabled = false;
       spinBtn.textContent = `Открыть за ${currentCase.price} ₴`;
-      strip.innerHTML = "";
       strip.style.transition = "none";
       strip.style.transform = "translateX(0px)";
+      buildIdleStrip(currentCase.items);
       renderDropsList(currentCase);
       openScreen.classList.add("active");
+    }
+
+    // Заполняем ленту предметами кейса для фоновой прокрутки (до нажатия "Открыть") —
+    // список дублируется дважды подряд, чтобы анимация зацикливалась без видимого скачка
+    function buildIdleStrip(items) {
+      strip.innerHTML = "";
+      strip.style.transform = "";
+      const sequence = [];
+      for (let i = 0; i < 20; i++) {
+        sequence.push(items[Math.floor(Math.random() * items.length)]);
+      }
+      const doubled = [...sequence, ...sequence];
+
+      doubled.forEach(itemData => {
+        const el = document.createElement("div");
+        el.className = `roulette-item rarity-${itemData.rarity}`;
+        el.innerHTML = `<img src="${itemData.image}" alt="${itemData.name}">`;
+        strip.appendChild(el);
+      });
+
+      strip.classList.add("idle-scroll");
     }
 
     // Список возможных предметов кейса с шансами выпадения — отсортирован от редкого к частому
@@ -1411,6 +1441,7 @@
 
     // Заполняем ленту "мусорными" предметами для визуального эффекта + вставляем реального победителя в фиксированную позицию
     function buildStrip(items, winner) {
+      strip.classList.remove("idle-scroll");
       strip.innerHTML = "";
       const REEL_LENGTH = 40;
       const WIN_INDEX = 34;
