@@ -984,7 +984,8 @@
       <div class="topup-option" data-amount="500"><div class="amount">500 ₴</div></div>
       <div class="topup-option" data-amount="1000"><div class="amount">1000 ₴</div></div>
     </div>
-    <div class="topup-note">Это демо-режим — реальная оплата подключится позже. Пока сумма добавляется к балансу в базе данных для теста.</div>
+    <div class="topup-note">Оплата принимается криптовалютой на защищённой странице NOWPayments. После оплаты вернись сюда и нажми кнопку ниже — баланс обновится в течение пары минут после подтверждения платежа в сети.</div>
+    <button class="btn-secondary" id="refresh-balance-btn" style="margin: 16px;">Проверить баланс</button>
   </div>
 
   <!-- Экран истории открытий -->
@@ -1212,7 +1213,7 @@
     navInventory.addEventListener("click", () => switchTab("inventory"));
     navProfile.addEventListener("click", () => switchTab("profile"));
 
-    // ===== Пополнение баланса =====
+    // ===== Пополнение баланса (реальная оплата криптой через NOWPayments) =====
     const topupScreen = document.getElementById("topup-screen");
     document.getElementById("menu-topup").addEventListener("click", () => {
       topupScreen.classList.add("active");
@@ -1220,24 +1221,58 @@
     document.getElementById("topup-back-btn").addEventListener("click", () => {
       topupScreen.classList.remove("active");
     });
+    document.getElementById("refresh-balance-btn").addEventListener("click", async () => {
+      const btn = document.getElementById("refresh-balance-btn");
+      btn.textContent = "Проверяем...";
+      try {
+        const res = await fetch(`${API_URL}/api/user`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: currentUser.telegram_id,
+            first_name: currentUser.first_name,
+            username: currentUser.username
+          })
+        });
+        const data = await res.json();
+        currentUser.balance = data.balance;
+        updateBalanceDisplay();
+        btn.textContent = "Проверить баланс";
+        alert(`Текущий баланс: ${formatMoney(currentUser.balance)}`);
+      } catch (err) {
+        console.error(err);
+        btn.textContent = "Проверить баланс";
+        alert("Не удалось проверить баланс, попробуй ещё раз");
+      }
+    });
     document.querySelectorAll(".topup-option").forEach(opt => {
       opt.addEventListener("click", async () => {
         const amount = parseInt(opt.dataset.amount, 10);
+        opt.style.opacity = "0.5";
         try {
-          const res = await fetch(`${API_URL}/api/topup`, {
+          const res = await fetch(`${API_URL}/api/payment/create`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ telegram_id: currentUser.telegram_id, amount })
+            body: JSON.stringify({ telegram_id: currentUser.telegram_id, amount_uah: amount })
           });
           const data = await res.json();
-          currentUser.balance = data.newBalance;
-          updateBalanceDisplay();
+          if (!res.ok || !data.invoice_url) {
+            alert(data.error || "Не удалось создать платёж, попробуй позже");
+            opt.style.opacity = "1";
+            return;
+          }
+          // Открываем страницу оплаты NOWPayments — внутри Telegram или в новой вкладке в браузере
+          if (tg?.openLink) {
+            tg.openLink(data.invoice_url);
+          } else {
+            window.open(data.invoice_url, "_blank");
+          }
           topupScreen.classList.remove("active");
-          alert(`Баланс пополнен на ${amount} ₴ (демо-режим)`);
         } catch (err) {
           console.error(err);
-          alert("Не удалось пополнить баланс, попробуй ещё раз");
+          alert("Ошибка соединения с сервером, попробуй ещё раз");
         }
+        opt.style.opacity = "1";
       });
     });
 
