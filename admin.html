@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS Cases — Админ-панель</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0e0e12;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ===== Экран входа ===== */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .login-card {
+    background: #17171f;
+    border: 1px solid #24242e;
+    border-radius: 16px;
+    padding: 30px 24px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+  }
+
+  .login-card h1 {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .login-card input {
+    width: 100%;
+    background: #0e0e12;
+    border: 1px solid #2a2a35;
+    border-radius: 10px;
+    padding: 12px;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .login-card input:focus { outline: none; border-color: #ffb800; }
+
+  .btn {
+    background: linear-gradient(90deg, #ffb800, #ff7a00);
+    color: #1a1a1a;
+    font-weight: 700;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .btn-secondary {
+    background: #23232c;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .btn-danger {
+    background: #3a1e1e;
+    color: #ff8a8a;
+    font-weight: 600;
+    border: 1px solid #5a2a2a;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .error-text { color: #ff5f5f; font-size: 12px; margin-top: 8px; min-height: 14px; }
+
+  /* ===== Основной экран ===== */
+  #app-screen { display: none; padding-bottom: 40px; }
+
+  .header {
+    padding: 16px;
+    background: #16161c;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .header h1 { font-size: 16px; }
+
+  .tabs {
+    display: flex;
+    overflow-x: auto;
+    background: #16161c;
+    border-bottom: 1px solid #24242e;
+  }
+
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .tab-btn.active { color: #ffb800; border-bottom-color: #ffb800; }
+
+  .tab-content { display: none; padding: 16px; }
+  .tab-content.active { display: block; }
+
+  .card {
+    background: #17171f;
+    border: 1px solid #24242e;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .card-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .card-row .label { color: #888; }
+  .card-row .value { font-weight: 600; text-align: right; word-break: break-all; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .status-pending { background: #3a2f10; color: #ffb800; }
+  .status-accepted { background: #10283a; color: #4da6ff; }
+  .status-trade_sent { background: #2a1a3a; color: #b34dff; }
+  .status-received { background: #123a1a; color: #4dff88; }
+  .status-waiting { background: #3a2f10; color: #ffb800; }
+  .status-finished { background: #123a1a; color: #4dff88; }
+
+  .card-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .loading-text, .empty-text { color: #666; font-size: 13px; padding: 20px 0; text-align: center; }
+
+  /* Пользователи */
+  .balance-edit { display: flex; gap: 6px; margin-top: 8px; }
+  .balance-edit input {
+    flex: 1;
+    background: #0e0e12;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    padding: 8px;
+    color: #fff;
+    font-size: 13px;
+  }
+
+  /* Кейсы */
+  .case-item-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 90px 70px 70px 30px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .case-item-row input, .case-item-row select {
+    background: #0e0e12;
+    border: 1px solid #2a2a35;
+    border-radius: 6px;
+    padding: 6px;
+    color: #fff;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .case-item-row .remove-item-btn {
+    background: #3a1e1e;
+    color: #ff8a8a;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .form-field { margin-bottom: 10px; }
+  .form-field label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; }
+  .form-field input {
+    width: 100%;
+    background: #0e0e12;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    padding: 10px;
+    color: #fff;
+    font-size: 13px;
+  }
+
+  .fab-add {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(90deg, #ffb800, #ff7a00);
+    color: #1a1a1a;
+    font-weight: 700;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 22px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    z-index: 10;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 50;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-card {
+    background: #17171f;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 420px;
+    margin-top: 20px;
+  }
+
+  .modal-card h2 { font-size: 15px; margin-bottom: 16px; }
+
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+  <!-- Экран входа -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h1>🔒 Админ-панель CS Cases</h1>
+      <input type="password" id="password-input" placeholder="Пароль">
+      <button class="btn" id="login-btn">Войти</button>
+      <div class="error-text" id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- Основной экран -->
+  <div id="app-screen">
+    <div class="header">
+      <h1>🎁 Админ-панель</h1>
+      <button class="btn-secondary" id="logout-btn">Выйти</button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab-btn active" data-tab="withdrawals">Заявки на вывод</div>
+      <div class="tab-btn" data-tab="users">Пользователи</div>
+      <div class="tab-btn" data-tab="cases">Кейсы</div>
+      <div class="tab-btn" data-tab="payments">Платежи</div>
+    </div>
+
+    <!-- Заявки на вывод -->
+    <div class="tab-content active" id="tab-withdrawals">
+      <div id="withdrawals-list" class="loading-text">Загрузка...</div>
+    </div>
+
+    <!-- Пользователи -->
+    <div class="tab-content" id="tab-users">
+      <div id="users-list" class="loading-text">Загрузка...</div>
+    </div>
+
+    <!-- Кейсы -->
+    <div class="tab-content" id="tab-cases">
+      <div id="cases-list" class="loading-text">Загрузка...</div>
+      <button class="fab-add" id="add-case-btn">+ Кейс</button>
+    </div>
+
+    <!-- Платежи -->
+    <div class="tab-content" id="tab-payments">
+      <div id="payments-list" class="loading-text">Загрузка...</div>
+    </div>
+  </div>
+
+  <!-- Модалка создания/редактирования кейса -->
+  <div class="modal-overlay" id="case-modal">
+    <div class="modal-card">
+      <h2 id="case-modal-title">Новый кейс</h2>
+
+      <div class="form-field">
+        <label>ID кейса (латиницей, без пробелов, нельзя изменить у существующего)</label>
+        <input type="text" id="case-id-input" placeholder="например, gold-rush">
+      </div>
+      <div class="form-field">
+        <label>Название</label>
+        <input type="text" id="case-name-input" placeholder="Золотая Лихорадка">
+      </div>
+      <div class="form-field">
+        <label>Цена (₴)</label>
+        <input type="number" id="case-price-input" placeholder="50">
+      </div>
+      <div class="form-field">
+        <label>Путь к картинке кейса (уже загруженной в images/ на GitHub)</label>
+        <input type="text" id="case-image-input" placeholder="images/case-gold-rush.png">
+      </div>
+
+      <div class="form-field">
+        <label>Предметы внутри</label>
+        <div id="case-items-editor"></div>
+        <button class="btn-secondary" id="add-item-row-btn" style="margin-top:8px;">+ Предмет</button>
+      </div>
+
+      <div class="error-text" id="case-modal-error"></div>
+
+      <div class="modal-actions">
+        <button class="btn" id="case-save-btn">Сохранить</button>
+        <button class="btn-secondary" id="case-cancel-btn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_URL = "https://cs-cases-backend.onrender.com";
+  let adminPassword = localStorage.getItem("adminPassword") || "";
+
+  const loginScreen = document.getElementById("login-screen");
+  const appScreen = document.getElementById("app-screen");
+
+  async function apiRequest(path, options = {}) {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": adminPassword,
+        ...(options.headers || {})
+      }
+    });
+    if (res.status === 401) throw new Error("UNAUTHORIZED");
+    return res;
+  }
+
+  async function tryLogin(password) {
+    adminPassword = password;
+    const res = await apiRequest("/api/admin/login", { method: "POST" });
+    if (!res.ok) throw new Error("Неверный пароль");
+    localStorage.setItem("adminPassword", password);
+    showApp();
+  }
+
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const password = document.getElementById("password-input").value;
+    const errorEl = document.getElementById("login-error");
+    errorEl.textContent = "";
+    try {
+      await tryLogin(password);
+    } catch (err) {
+      errorEl.textContent = "Неверный пароль";
+    }
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("adminPassword");
+    adminPassword = "";
+    appScreen.style.display = "none";
+    loginScreen.style.display = "flex";
+  });
+
+  function showApp() {
+    loginScreen.style.display = "none";
+    appScreen.style.display = "block";
+    loadWithdrawals();
+    loadUsers();
+    loadCases();
+    loadPayments();
+  }
+
+  // Автовход, если пароль уже сохранён в этом браузере
+  if (adminPassword) {
+    tryLogin(adminPassword).catch(() => {
+      loginScreen.style.display = "flex";
+    });
+  }
+
+  // ===== Переключение вкладок =====
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+    });
+  });
+
+  function formatDate(str) {
+    return new Date(str).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+  }
+
+  const statusLabels = {
+    pending: "⏳ В обработке",
+    accepted: "🔄 В процессе",
+    trade_sent: "📤 Трейд отправлен",
+    received: "✅ Получено",
+    waiting: "⏳ Ожидает оплаты",
+    finished: "✅ Оплачено"
+  };
+
+  // ===== Заявки на вывод =====
+  async function loadWithdrawals() {
+    const listEl = document.getElementById("withdrawals-list");
+    listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    try {
+      const res = await apiRequest("/api/admin/withdrawals");
+      const items = await res.json();
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-text">Заявок пока нет</div>`;
+        return;
+      }
+      listEl.innerHTML = "";
+      items.forEach(w => {
+        const playerLabel = w.username ? `@${w.username}` : (w.first_name || `ID ${w.telegram_id}`);
+        const card = document.createElement("div");
+        card.className = "card";
+        let actionsHtml = "";
+        if (w.status === "pending") {
+          actionsHtml = `<button class="btn-secondary" data-action="accepted" data-id="${w.id}">Принять</button>`;
+        } else if (w.status === "accepted") {
+          actionsHtml = `<button class="btn-secondary" data-action="trade_sent" data-id="${w.id}">Трейд отправлен</button>`;
+        } else if (w.status === "trade_sent") {
+          actionsHtml = `<button class="btn-secondary" data-action="received" data-id="${w.id}">Получено</button>`;
+        }
+        card.innerHTML = `
+          <div class="card-row"><span class="label">Игрок</span><span class="value">${playerLabel}</span></div>
+          <div class="card-row"><span class="label">Предмет</span><span class="value">${w.item_name}</span></div>
+          <div class="card-row"><span class="label">Ценность</span><span class="value">${w.item_value} ₴</span></div>
+          <div class="card-row"><span class="label">Трейд-ссылка</span><span class="value">${w.trade_link}</span></div>
+          <div class="card-row"><span class="label">Дата</span><span class="value">${formatDate(w.requested_at)}</span></div>
+          <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${w.status}">${statusLabels[w.status] || w.status}</span></div>
+          <div class="card-actions">${actionsHtml}</div>
+        `;
+        listEl.appendChild(card);
+      });
+
+      listEl.querySelectorAll("button[data-action]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await apiRequest(`/api/admin/withdrawals/${btn.dataset.id}/status`, {
+              method: "POST",
+              body: JSON.stringify({ status: btn.dataset.action })
+            });
+            loadWithdrawals();
+          } catch (err) {
+            alert("Не удалось обновить статус");
+            btn.disabled = false;
+          }
+        });
+      });
+    } catch (err) {
+      listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+    }
+  }
+
+  // ===== Пользователи =====
+  async function loadUsers() {
+    const listEl = document.getElementById("users-list");
+    listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    try {
+      const res = await apiRequest("/api/admin/users");
+      const items = await res.json();
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-text">Пользователей пока нет</div>`;
+        return;
+      }
+      listEl.innerHTML = "";
+      items.forEach(u => {
+        const label = u.username ? `@${u.username}` : (u.first_name || "Без имени");
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-row"><span class="label">Игрок</span><span class="value">${label} (id ${u.telegram_id})</span></div>
+          <div class="card-row"><span class="label">Баланс</span><span class="value">${u.balance} ₴</span></div>
+          <div class="card-row"><span class="label">Кейсов открыто</span><span class="value">${u.cases_opened}</span></div>
+          <div class="card-row"><span class="label">Предметов в инвентаре</span><span class="value">${u.inventory_count}</span></div>
+          <div class="card-row"><span class="label">Регистрация</span><span class="value">${formatDate(u.created_at)}</span></div>
+          <div class="balance-edit">
+            <input type="number" placeholder="Новый баланс" id="balance-input-${u.telegram_id}">
+            <button class="btn-secondary" data-id="${u.telegram_id}" class="save-balance-btn">Сохранить</button>
+          </div>
+        `;
+        listEl.appendChild(card);
+
+        card.querySelector(".balance-edit button").addEventListener("click", async () => {
+          const input = document.getElementById(`balance-input-${u.telegram_id}`);
+          const newBalance = parseInt(input.value, 10);
+          if (isNaN(newBalance) || newBalance < 0) {
+            alert("Введи корректное число");
+            return;
+          }
+          try {
+            await apiRequest(`/api/admin/users/${u.telegram_id}/balance`, {
+              method: "POST",
+              body: JSON.stringify({ balance: newBalance })
+            });
+            loadUsers();
+          } catch (err) {
+            alert("Не удалось изменить баланс");
+          }
+        });
+      });
+    } catch (err) {
+      listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+    }
+  }
+
+  // ===== Кейсы =====
+  let editingCaseId = null; // null = создаём новый, иначе редактируем существующий
+
+  async function loadCases() {
+    const listEl = document.getElementById("cases-list");
+    listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    try {
+      const res = await apiRequest("/api/admin/cases");
+      const items = await res.json();
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-text">Кейсов пока нет</div>`;
+        return;
+      }
+      listEl.innerHTML = "";
+      items.forEach(c => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const itemsSummary = c.items.map(i => `${i.name} (${i.rarity}, ${i.weight}%, ${i.value}₴)`).join("<br>");
+        card.innerHTML = `
+          <div class="card-row"><span class="label">Название</span><span class="value">${c.name}</span></div>
+          <div class="card-row"><span class="label">ID</span><span class="value">${c.id}</span></div>
+          <div class="card-row"><span class="label">Цена</span><span class="value">${c.price} ₴</span></div>
+          <div class="card-row"><span class="label">Картинка</span><span class="value">${c.image}</span></div>
+          <div class="card-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+            <span class="label">Предметы (${c.items.length})</span>
+            <span class="value" style="text-align:left; font-weight:400; font-size:12px;">${itemsSummary}</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-secondary" data-edit="${c.id}">Редактировать</button>
+            <button class="btn-danger" data-delete="${c.id}">Удалить</button>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+
+      listEl.querySelectorAll("button[data-edit]").forEach(btn => {
+        btn.addEventListener("click", () => openCaseModal(items.find(c => c.id === btn.dataset.edit)));
+      });
+      listEl.querySelectorAll("button[data-delete]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Удалить этот кейс? Действие необратимо.")) return;
+          try {
+            await apiRequest(`/api/admin/cases/${btn.dataset.delete}`, { method: "DELETE" });
+            loadCases();
+          } catch (err) {
+            alert("Не удалось удалить кейс");
+          }
+        });
+      });
+    } catch (err) {
+      listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+    }
+  }
+
+  const caseModal = document.getElementById("case-modal");
+  const caseItemsEditor = document.getElementById("case-items-editor");
+
+  function addItemRow(item = { name: "", image: "", rarity: "common", weight: "", value: "" }) {
+    const row = document.createElement("div");
+    row.className = "case-item-row";
+    row.innerHTML = `
+      <input type="text" placeholder="Название" class="item-name" value="${item.name}">
+      <input type="text" placeholder="images/skin.png" class="item-image" value="${item.image}">
+      <select class="item-rarity">
+        <option value="common" ${item.rarity === "common" ? "selected" : ""}>common</option>
+        <option value="rare" ${item.rarity === "rare" ? "selected" : ""}>rare</option>
+        <option value="epic" ${item.rarity === "epic" ? "selected" : ""}>epic</option>
+        <option value="legendary" ${item.rarity === "legendary" ? "selected" : ""}>legendary</option>
+      </select>
+      <input type="number" placeholder="Шанс %" class="item-weight" value="${item.weight}">
+      <input type="number" placeholder="Цена ₴" class="item-value" value="${item.value}">
+      <button class="remove-item-btn">✕</button>
+    `;
+    row.querySelector(".remove-item-btn").addEventListener("click", () => row.remove());
+    caseItemsEditor.appendChild(row);
+  }
+
+  document.getElementById("add-item-row-btn").addEventListener("click", () => addItemRow());
+
+  function openCaseModal(caseData = null) {
+    document.getElementById("case-modal-error").textContent = "";
+    caseItemsEditor.innerHTML = "";
+    editingCaseId = caseData ? caseData.id : null;
+
+    document.getElementById("case-modal-title").textContent = caseData ? "Редактировать кейс" : "Новый кейс";
+    document.getElementById("case-id-input").value = caseData ? caseData.id : "";
+    document.getElementById("case-id-input").disabled = !!caseData;
+    document.getElementById("case-name-input").value = caseData ? caseData.name : "";
+    document.getElementById("case-price-input").value = caseData ? caseData.price : "";
+    document.getElementById("case-image-input").value = caseData ? caseData.image : "";
+
+    if (caseData && caseData.items.length) {
+      caseData.items.forEach(addItemRow);
+    } else {
+      addItemRow();
+    }
+
+    caseModal.classList.add("active");
+  }
+
+  document.getElementById("add-case-btn").addEventListener("click", () => openCaseModal());
+  document.getElementById("case-cancel-btn").addEventListener("click", () => caseModal.classList.remove("active"));
+
+  document.getElementById("case-save-btn").addEventListener("click", async () => {
+    const errorEl = document.getElementById("case-modal-error");
+    errorEl.textContent = "";
+
+    const id = document.getElementById("case-id-input").value.trim();
+    const name = document.getElementById("case-name-input").value.trim();
+    const price = parseInt(document.getElementById("case-price-input").value, 10);
+    const image = document.getElementById("case-image-input").value.trim();
+
+    const items = [...caseItemsEditor.querySelectorAll(".case-item-row")].map(row => ({
+      name: row.querySelector(".item-name").value.trim(),
+      image: row.querySelector(".item-image").value.trim(),
+      rarity: row.querySelector(".item-rarity").value,
+      weight: parseInt(row.querySelector(".item-weight").value, 10),
+      value: parseInt(row.querySelector(".item-value").value, 10)
+    }));
+
+    if (!id || !name || !price || !image || items.some(i => !i.name || !i.image || !i.weight || !i.value)) {
+      errorEl.textContent = "Заполни все поля, включая все предметы";
+      return;
+    }
+
+    try {
+      if (editingCaseId) {
+        await apiRequest(`/api/admin/cases/${editingCaseId}`, {
+          method: "PUT",
+          body: JSON.stringify({ name, price, image, items })
+        });
+      } else {
+        await apiRequest("/api/admin/cases", {
+          method: "POST",
+          body: JSON.stringify({ id, name, price, image, items })
+        });
+      }
+      caseModal.classList.remove("active");
+      loadCases();
+    } catch (err) {
+      errorEl.textContent = "Не удалось сохранить кейс";
+    }
+  });
+
+  // ===== Платежи =====
+  async function loadPayments() {
+    const listEl = document.getElementById("payments-list");
+    listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    try {
+      const res = await apiRequest("/api/admin/payments");
+      const items = await res.json();
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-text">Платежей пока нет</div>`;
+        return;
+      }
+      listEl.innerHTML = "";
+      items.forEach(p => {
+        const playerLabel = p.username ? `@${p.username}` : (p.first_name || `ID ${p.telegram_id}`);
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-row"><span class="label">Игрок</span><span class="value">${playerLabel}</span></div>
+          <div class="card-row"><span class="label">Сумма</span><span class="value">${p.amount_uah} ₴ (~$${p.amount_usd})</span></div>
+          <div class="card-row"><span class="label">Order ID</span><span class="value">${p.order_id}</span></div>
+          <div class="card-row"><span class="label">Дата</span><span class="value">${formatDate(p.created_at)}</span></div>
+          <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${p.status}">${statusLabels[p.status] || p.status}</span></div>
+        `;
+        listEl.appendChild(card);
+      });
+    } catch (err) {
+      listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+    }
+  }
+</script>
+
+</body>
+</html>
