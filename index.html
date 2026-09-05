@@ -69,6 +69,12 @@
       font-size: 14px;
     }
 
+    .balance-icon {
+      width: 17px;
+      height: 17px;
+      object-fit: contain;
+    }
+
     .tab-screen {
       display: none;
     }
@@ -308,6 +314,12 @@
       font-weight: 500;
     }
 
+    .menu-icon {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
+
     .menu-item .menu-arrow {
       color: #666;
     }
@@ -389,8 +401,16 @@
       color: #C6FF1E;
     }
 
-    .nav-item .icon {
-      font-size: 20px;
+    .nav-item .nav-icon {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: grayscale(1) brightness(1.6) opacity(0.55);
+      transition: filter 0.15s ease;
+    }
+
+    .nav-item.active .nav-icon {
+      filter: none;
     }
 
     /* ===== Экран открытия кейса (оверлей) ===== */
@@ -955,7 +975,7 @@
       </svg>
       VeDrop
     </div>
-    <div class="balance">💰 <span id="balance-value">— ₴</span></div>
+    <div class="balance"><img src="images/icon-balance.png" class="balance-icon" alt=""> <span id="balance-value">— ₴</span></div>
   </div>
 
   <!-- Вкладка: Кейсы -->
@@ -1004,7 +1024,7 @@
 
     <div class="profile-menu">
       <div class="menu-item" id="menu-topup">
-        <div class="menu-left">💳 <span>Пополнить баланс</span></div>
+        <div class="menu-left"><img src="images/icon-topup.png" class="menu-icon" alt=""> <span>Пополнить баланс</span></div>
         <div class="menu-arrow">›</div>
       </div>
       <div class="menu-item">
@@ -1024,15 +1044,15 @@
 
   <div class="bottom-nav">
     <div class="nav-item active" id="nav-cases">
-      <div class="icon">🎁</div>
+      <img class="nav-icon" src="images/icon-cases.png" alt="Кейсы">
       <div>Кейсы</div>
     </div>
     <div class="nav-item" id="nav-inventory">
-      <div class="icon">🎒</div>
+      <img class="nav-icon" src="images/icon-inventory.png" alt="Инвентарь">
       <div>Инвентарь</div>
     </div>
     <div class="nav-item" id="nav-profile">
-      <div class="icon">👤</div>
+      <img class="nav-icon" src="images/icon-profile.png" alt="Профиль">
       <div>Профиль</div>
     </div>
   </div>
@@ -1797,9 +1817,6 @@
     // Запускаем инициализацию приложения
     initApp();
   </script>
-
-</body>
-</html>
 
 </body>
 </html>
