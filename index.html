@@ -928,6 +928,70 @@
       line-height: 1.4;
     }
 
+    /* ===== Модалка выбора валюты отображения ===== */
+    .currency-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 250;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .currency-modal.active {
+      display: flex;
+    }
+
+    .currency-picker-card {
+      background: #15151b;
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 320px;
+      border: 1px solid #232330;
+    }
+
+    .currency-picker-card .withdraw-title {
+      margin-bottom: 16px;
+    }
+
+    .currency-picker-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      border-radius: 12px;
+      border: 2px solid #232330;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .currency-picker-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .currency-picker-row.selected {
+      border-color: #C6FF1E;
+      background: rgba(198, 255, 30, 0.08);
+    }
+
+    .currency-picker-row .currency-picker-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .currency-picker-row .currency-picker-symbol {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #C6FF1E;
+    }
+
     /* ===== Экран загрузки ===== */
     .loading-screen {
       position: fixed;
@@ -1031,8 +1095,8 @@
         <div class="menu-left"><img src="images/icon-topup.png" class="menu-icon" alt=""> <span>Пополнить баланс</span></div>
         <div class="menu-arrow">›</div>
       </div>
-      <div class="menu-item">
-        <div class="menu-left"><img src="images/icon-currency.png" class="menu-icon" alt=""> <span>Валюта: Гривна (₴)</span></div>
+      <div class="menu-item" id="menu-currency">
+        <div class="menu-left"><img src="images/icon-currency.png" class="menu-icon" alt=""> <span id="currency-menu-label">Валюта: Гривна (₴)</span></div>
         <div class="menu-arrow">›</div>
       </div>
       <div class="menu-item" id="menu-history">
@@ -1126,6 +1190,25 @@
   </div>
 
   <!-- Модалка вывода предмета -->
+  <div class="currency-modal" id="currency-modal">
+    <div class="currency-picker-card">
+      <div class="withdraw-title">Валюта отображения</div>
+      <div class="currency-picker-row" data-code="UAH">
+        <span class="currency-picker-name">Гривна</span>
+        <span class="currency-picker-symbol">₴</span>
+      </div>
+      <div class="currency-picker-row" data-code="USD">
+        <span class="currency-picker-name">Доллар</span>
+        <span class="currency-picker-symbol">$</span>
+      </div>
+      <div class="currency-picker-row" data-code="RUB">
+        <span class="currency-picker-name">Рубль</span>
+        <span class="currency-picker-symbol">₽</span>
+      </div>
+      <button class="btn-secondary" id="currency-modal-close" style="margin-top: 14px; width: 100%;">Закрыть</button>
+    </div>
+  </div>
+
   <div class="withdraw-modal" id="withdraw-modal">
     <div class="withdraw-card">
       <div class="withdraw-title">Вывод предмета</div>
@@ -1168,12 +1251,57 @@
 
     let currentUser = null; // { telegram_id, balance, ... }
 
-    function formatMoney(n) {
-      return Number(n).toLocaleString("ru-RU") + " ₴";
+    // ===== Валюта отображения =====
+    // Баланс и все цены всегда хранятся и приходят с сервера в гривне (₴) — это внутренняя
+    // валюта проекта. Здесь только пересчёт "на глаз" для показа в другой валюте.
+    // Курсы примерные, привязаны к константе UAH_PER_USD=41 из бэкенда — стоит периодически сверять.
+    const DISPLAY_CURRENCIES = {
+      UAH: { symbol: "₴", label: "Гривна", rate: 1 },
+      USD: { symbol: "$", label: "Доллар", rate: 1 / 41 },
+      RUB: { symbol: "₽", label: "Рубль", rate: 86.2 / 41 }
+    };
+
+    let displayCurrency = localStorage.getItem("vedrop_currency") || "UAH";
+    if (!DISPLAY_CURRENCIES[displayCurrency]) displayCurrency = "UAH";
+
+    function formatMoney(amountUAH) {
+      const cur = DISPLAY_CURRENCIES[displayCurrency];
+      const converted = Number(amountUAH) * cur.rate;
+      const formatted = displayCurrency === "UAH"
+        ? Math.round(converted).toLocaleString("ru-RU")
+        : converted.toFixed(2).replace(".", ",");
+      return `${formatted} ${cur.symbol}`;
     }
 
     function updateBalanceDisplay() {
       document.getElementById("balance-value").textContent = formatMoney(currentUser.balance);
+    }
+
+    // Применяем выбранную валюту ко всем экранам, где уже что-то отрисовано
+    function refreshAllMoneyDisplays() {
+      if (currentUser) updateBalanceDisplay();
+      if (cases.length) renderCasesGrid();
+      if (document.getElementById("tab-inventory").classList.contains("active")) renderInventory();
+      if (document.getElementById("history-screen")?.classList.contains("active")) renderHistory();
+      updateProfileStats();
+      if (currentCase && !spinBtn.disabled) {
+        spinBtn.textContent = `Открыть за ${formatMoney(currentCase.price)}`;
+      }
+      if (currentCase && openScreen.classList.contains("active")) {
+        renderDropsList(currentCase);
+      }
+    }
+
+    function setDisplayCurrency(code) {
+      if (!DISPLAY_CURRENCIES[code]) return;
+      displayCurrency = code;
+      localStorage.setItem("vedrop_currency", code);
+      const cur = DISPLAY_CURRENCIES[code];
+      document.getElementById("currency-menu-label").textContent = `Валюта: ${cur.label} (${cur.symbol})`;
+      document.querySelectorAll(".currency-picker-row").forEach(row => {
+        row.classList.toggle("selected", row.dataset.code === code);
+      });
+      refreshAllMoneyDisplays();
     }
 
     // ===== Получаем ID пользователя из Telegram =====
@@ -1226,7 +1354,7 @@
         const card = document.createElement("div");
         card.className = "case-card";
         card.innerHTML = `
-          <div class="case-price-badge">${c.price} ₴</div>
+          <div class="case-price-badge">${formatMoney(c.price)}</div>
           <img src="${c.image}" alt="${c.name}">
           <div class="case-name">${c.name}</div>
         `;
@@ -1477,7 +1605,7 @@
               <div class="history-item-name">${entry.item_name}</div>
               <div class="history-case-name">${entry.case_name} · ${timeStr}</div>
             </div>
-            <div class="history-value">${entry.value} ₴</div>
+            <div class="history-value">${formatMoney(entry.value)}</div>
           `;
           list.appendChild(row);
         });
@@ -1487,11 +1615,38 @@
     }
 
     // Заглушки для остальных пунктов меню профиля
-    document.querySelectorAll(".menu-item:not(#menu-topup):not(#menu-history)").forEach(item => {
+    document.querySelectorAll(".menu-item:not(#menu-topup):not(#menu-history):not(#menu-currency)").forEach(item => {
       item.addEventListener("click", () => {
         alert("Эта функция появится на следующих этапах 🙂");
       });
     });
+
+    // ===== Выбор валюты отображения =====
+    const currencyModal = document.getElementById("currency-modal");
+
+    document.getElementById("menu-currency").addEventListener("click", () => {
+      document.querySelectorAll(".currency-picker-row").forEach(row => {
+        row.classList.toggle("selected", row.dataset.code === displayCurrency);
+      });
+      currencyModal.classList.add("active");
+    });
+
+    document.getElementById("currency-modal-close").addEventListener("click", () => {
+      currencyModal.classList.remove("active");
+    });
+
+    document.querySelectorAll(".currency-picker-row").forEach(row => {
+      row.addEventListener("click", () => {
+        setDisplayCurrency(row.dataset.code);
+        currencyModal.classList.remove("active");
+      });
+    });
+
+    // Выставляем сохранённую валюту в подписи меню при загрузке
+    (function initCurrencyLabel() {
+      const cur = DISPLAY_CURRENCIES[displayCurrency];
+      document.getElementById("currency-menu-label").textContent = `Валюта: ${cur.label} (${cur.symbol})`;
+    })();
 
     // ===== Инвентарь =====
     async function renderInventory() {
@@ -1531,14 +1686,14 @@
           const actionsHtml = item.withdraw_status
             ? `<div class="withdraw-status-badge">${statusLabels[item.withdraw_status] || "В обработке"}</div>`
             : `<div class="inventory-actions">
-                 <button class="btn-sell" data-id="${item.id}" data-value="${item.value}">Продать за ${item.value} ₴</button>
+                 <button class="btn-sell" data-id="${item.id}" data-value="${item.value}">Продать за ${formatMoney(item.value)}</button>
                  <button class="btn-withdraw" data-id="${item.id}" data-name="${item.item_name}">Вывести</button>
                </div>`;
 
           el.innerHTML = `
             <img src="${item.item_image}" alt="${item.item_name}">
             <div class="item-name">${item.item_name}</div>
-            <div class="item-value">${item.value} ₴</div>
+            <div class="item-value">${formatMoney(item.value)}</div>
             ${actionsHtml}
           `;
           invGrid.appendChild(el);
@@ -1579,7 +1734,7 @@
       openTitle.textContent = currentCase.name;
       openCaseImg.src = currentCase.image;
       spinBtn.disabled = false;
-      spinBtn.textContent = `Открыть за ${currentCase.price} ₴`;
+      spinBtn.textContent = `Открыть за ${formatMoney(currentCase.price)}`;
       strip.style.transition = "none";
       strip.style.transform = "translateX(0px)";
       buildIdleStrip(currentCase.items);
@@ -1624,7 +1779,7 @@
           <img src="${item.image}" alt="${item.name}">
           <div class="drop-info">
             <div class="drop-name">${item.name}</div>
-            <div class="drop-value">${item.value} ₴</div>
+            <div class="drop-value">${formatMoney(item.value)}</div>
           </div>
           <div class="drop-chance">${chance}%</div>
         `;
@@ -1706,7 +1861,7 @@
       pendingItem = item;
       resultImg.src = item.image;
       resultName.textContent = item.name;
-      resultValue.textContent = `${item.value} ₴`;
+      resultValue.textContent = formatMoney(item.value);
       btnInventory.disabled = false;
       btnInventory.textContent = "Добавить в инвентарь";
       resultModal.classList.add("active");
