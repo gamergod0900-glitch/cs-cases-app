@@ -158,10 +158,26 @@
   .status-received { background: #123a1a; color: #4dff88; }
   .status-waiting { background: #3a2f10; color: #ffb800; }
   .status-finished { background: #123a1a; color: #4dff88; }
+  .status-open { background: #3a2f10; color: #ffb800; }
+  .status-resolved { background: #123a1a; color: #4dff88; }
 
   .card-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
 
   .loading-text, .empty-text { color: #666; font-size: 13px; padding: 20px 0; text-align: center; }
+
+  /* Поддержка */
+  .support-message {
+    font-size: 13px;
+    color: #ddd;
+    background: #0e0e12;
+    border: 1px solid #24242e;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 8px 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
 
   /* Пользователи */
   .balance-edit { display: flex; gap: 6px; margin-top: 8px; }
@@ -335,6 +351,7 @@
       <div class="tab-btn" data-tab="users">Пользователи</div>
       <div class="tab-btn" data-tab="cases">Кейсы</div>
       <div class="tab-btn" data-tab="payments">Платежи</div>
+      <div class="tab-btn" data-tab="support">Поддержка</div>
     </div>
 
     <!-- Заявки на вывод -->
@@ -357,6 +374,11 @@
     <!-- Платежи -->
     <div class="tab-content" id="tab-payments">
       <div id="payments-list" class="loading-text">Загрузка...</div>
+    </div>
+
+    <!-- Поддержка -->
+    <div class="tab-content" id="tab-support">
+      <div id="support-list" class="loading-text">Загрузка...</div>
     </div>
   </div>
 
@@ -461,6 +483,7 @@
     loadUsers();
     loadCases();
     loadPayments();
+    loadSupport();
   }
 
   // Автовход, если пароль уже сохранён в этом браузере
@@ -490,7 +513,9 @@
     trade_sent: "📤 Трейд отправлен",
     received: "✅ Получено",
     waiting: "⏳ Ожидает оплаты",
-    finished: "✅ Оплачено"
+    finished: "✅ Оплачено",
+    open: "🆘 Новое",
+    resolved: "✅ Решено"
   };
 
   // ===== Заявки на вывод =====
@@ -835,6 +860,55 @@
           <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${p.status}">${statusLabels[p.status] || p.status}</span></div>
         `;
         listEl.appendChild(card);
+      });
+    } catch (err) {
+      listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+    }
+  }
+
+  // ===== Поддержка =====
+  async function loadSupport() {
+    const listEl = document.getElementById("support-list");
+    listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    try {
+      const res = await apiRequest("/api/admin/support");
+      const items = await res.json();
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-text">Обращений пока нет</div>`;
+        return;
+      }
+      listEl.innerHTML = "";
+      items.forEach(s => {
+        const playerLabel = s.username ? `@${s.username}` : (s.first_name || `ID ${s.telegram_id}`);
+        const card = document.createElement("div");
+        card.className = "card";
+        const actionsHtml = s.status === "open"
+          ? `<button class="btn-secondary" data-resolve="${s.id}">Отметить решённым</button>`
+          : "";
+        card.innerHTML = `
+          <div class="card-row"><span class="label">Игрок</span><span class="value">${playerLabel} (id ${s.telegram_id})</span></div>
+          <div class="card-row"><span class="label">Дата</span><span class="value">${formatDate(s.created_at)}</span></div>
+          <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${s.status}">${statusLabels[s.status] || s.status}</span></div>
+          <div class="support-message">${s.message}</div>
+          <div class="card-actions">${actionsHtml}</div>
+        `;
+        listEl.appendChild(card);
+      });
+
+      listEl.querySelectorAll("button[data-resolve]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await apiRequest(`/api/admin/support/${btn.dataset.resolve}/status`, {
+              method: "POST",
+              body: JSON.stringify({ status: "resolved" })
+            });
+            loadSupport();
+          } catch (err) {
+            alert("Не удалось обновить статус");
+            btn.disabled = false;
+          }
+        });
       });
     } catch (err) {
       listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
