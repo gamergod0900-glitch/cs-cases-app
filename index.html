@@ -928,6 +928,44 @@
       line-height: 1.4;
     }
 
+    /* ===== Модалка обращения в поддержку ===== */
+    .support-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 250;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .support-modal.active {
+      display: flex;
+    }
+
+    .support-modal .withdraw-card textarea {
+      width: 100%;
+      background: #0a0a0f;
+      border: 1px solid #232330;
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      margin-bottom: 6px;
+    }
+
+    .support-modal .withdraw-card textarea:focus {
+      outline: none;
+      border-color: #C6FF1E;
+    }
+
     /* ===== Модалка выбора валюты отображения ===== */
     .currency-modal {
       position: fixed;
@@ -1103,7 +1141,7 @@
         <div class="menu-left"><img src="images/icon-history.png" class="menu-icon" alt=""> <span>История открытий</span></div>
         <div class="menu-arrow">›</div>
       </div>
-      <div class="menu-item">
+      <div class="menu-item" id="menu-support">
         <div class="menu-left"><img src="images/icon-support.png" class="menu-icon" alt=""> <span>Поддержка</span></div>
         <div class="menu-arrow">›</div>
       </div>
@@ -1218,6 +1256,19 @@
       <div class="result-actions">
         <button class="btn-primary" id="withdraw-submit-btn">Отправить заявку</button>
         <button class="btn-secondary" id="withdraw-cancel-btn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="support-modal" id="support-modal">
+    <div class="withdraw-card">
+      <div class="withdraw-title">Поддержка</div>
+      <div class="withdraw-item">Опиши свою проблему, и мы ответим тебе в Telegram</div>
+      <textarea id="support-message-input" placeholder="Например: не пришёл предмет после вывода..."></textarea>
+      <div class="withdraw-hint">Обращение придёт напрямую владельцу проекта. Обычно отвечаем в течение дня.</div>
+      <div class="result-actions">
+        <button class="btn-primary" id="support-submit-btn">Отправить</button>
+        <button class="btn-secondary" id="support-cancel-btn">Отмена</button>
       </div>
     </div>
   </div>
@@ -1615,7 +1666,7 @@
     }
 
     // Заглушки для остальных пунктов меню профиля
-    document.querySelectorAll(".menu-item:not(#menu-topup):not(#menu-history):not(#menu-currency)").forEach(item => {
+    document.querySelectorAll(".menu-item:not(#menu-topup):not(#menu-history):not(#menu-currency):not(#menu-support)").forEach(item => {
       item.addEventListener("click", () => {
         alert("Эта функция появится на следующих этапах 🙂");
       });
@@ -1973,7 +2024,56 @@
       }
     });
 
-    // Запускаем инициализацию приложения
+    // ===== Обращение в поддержку =====
+    const supportModal = document.getElementById("support-modal");
+    const supportMessageInput = document.getElementById("support-message-input");
+    const supportSubmitBtn = document.getElementById("support-submit-btn");
+    const supportCancelBtn = document.getElementById("support-cancel-btn");
+
+    document.getElementById("menu-support").addEventListener("click", () => {
+      supportMessageInput.value = "";
+      supportModal.classList.add("active");
+    });
+
+    supportCancelBtn.addEventListener("click", () => {
+      supportModal.classList.remove("active");
+    });
+
+    supportSubmitBtn.addEventListener("click", async () => {
+      const message = supportMessageInput.value.trim();
+      if (!message) {
+        alert("Опиши свою проблему");
+        return;
+      }
+      supportSubmitBtn.disabled = true;
+      supportSubmitBtn.textContent = "Отправляем...";
+      try {
+        const res = await fetch(`${API_URL}/api/support`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: currentUser.telegram_id,
+            message
+          })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || "Не удалось отправить обращение");
+          supportSubmitBtn.disabled = false;
+          supportSubmitBtn.textContent = "Отправить";
+          return;
+        }
+        supportModal.classList.remove("active");
+        alert("Обращение отправлено! Мы ответим тебе в ближайшее время 🙂");
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером, попробуй ещё раз");
+      }
+      supportSubmitBtn.disabled = false;
+      supportSubmitBtn.textContent = "Отправить";
+    });
+
+        // Запускаем инициализацию приложения
     initApp();
   </script>
 
