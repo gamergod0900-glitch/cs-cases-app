@@ -4,499 +4,625 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CS Cases — Админ-панель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: #0e0e12;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
-  }
-
-  /* ===== Экран входа ===== */
-  #login-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-
-  .login-card {
-    background: #17171f;
-    border: 1px solid #24242e;
-    border-radius: 16px;
-    padding: 30px 24px;
-    width: 100%;
-    max-width: 340px;
-    text-align: center;
-  }
-
-  .login-card h1 {
-    font-size: 18px;
-    margin-bottom: 20px;
-  }
-
-  .login-card input {
-    width: 100%;
-    background: #0e0e12;
-    border: 1px solid #2a2a35;
-    border-radius: 10px;
-    padding: 12px;
-    color: #fff;
-    font-size: 14px;
-    margin-bottom: 12px;
-  }
-
-  .login-card input:focus { outline: none; border-color: #ffb800; }
-
-  .btn {
-    background: linear-gradient(90deg, #ffb800, #ff7a00);
-    color: #1a1a1a;
-    font-weight: 700;
-    border: none;
-    padding: 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 14px;
-  }
-
-  .btn-secondary {
-    background: #23232c;
-    color: #fff;
-    font-weight: 600;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-
-  .btn-danger {
-    background: #3a1e1e;
-    color: #ff8a8a;
-    font-weight: 600;
-    border: 1px solid #5a2a2a;
-    padding: 8px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-
-  .error-text { color: #ff5f5f; font-size: 12px; margin-top: 8px; min-height: 14px; }
-
-  /* ===== Основной экран ===== */
-  #app-screen { display: none; padding-bottom: 40px; }
-
-  .header {
-    padding: 16px;
-    background: #16161c;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-  }
-
-  .header h1 { font-size: 16px; }
-
-  .tabs {
-    display: flex;
-    overflow-x: auto;
-    background: #16161c;
-    border-bottom: 1px solid #24242e;
-  }
-
-  .tab-btn {
-    flex-shrink: 0;
-    padding: 12px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #888;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
-  }
-
-  .tab-btn.active { color: #ffb800; border-bottom-color: #ffb800; }
-
-  .tab-content { display: none; padding: 16px; }
-  .tab-content.active { display: block; }
-
-  .card {
-    background: #17171f;
-    border: 1px solid #24242e;
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 12px;
-  }
-
-  .card-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
-
-  .card-row .label { color: #888; }
-  .card-row .value { font-weight: 600; text-align: right; word-break: break-all; }
-
-  .status-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-  }
-
-  .status-pending { background: #3a2f10; color: #ffb800; }
-  .status-accepted { background: #10283a; color: #4da6ff; }
-  .status-trade_sent { background: #2a1a3a; color: #b34dff; }
-  .status-received { background: #123a1a; color: #4dff88; }
-  .status-waiting { background: #3a2f10; color: #ffb800; }
-  .status-finished { background: #123a1a; color: #4dff88; }
-  .status-new { background: #3a2f10; color: #ffb800; }
-  .status-in_progress { background: #10283a; color: #4da6ff; }
-  .status-closed { background: #123a1a; color: #4dff88; }
-
-  .card-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-
-  .loading-text, .empty-text { color: #666; font-size: 13px; padding: 20px 0; text-align: center; }
-
-  /* Поддержка: список диалогов */
-  .support-conv-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    cursor: pointer;
-  }
-
-  .support-conv-info { min-width: 0; flex: 1; }
-
-  .support-conv-name {
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .support-conv-preview {
-    font-size: 12px;
-    color: #888;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .support-conv-meta {
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  .support-conv-time {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 4px;
-  }
-
-  .support-unread-badge {
-    display: inline-block;
-    background: #ffb800;
-    color: #1a1a1a;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 10px;
-    padding: 2px 8px;
-  }
-
-  /* Поддержка: окно чата */
-  .support-chat-card {
-    display: flex;
-    flex-direction: column;
-    max-height: 82vh;
-  }
-
-  .support-chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin: 12px 0;
-    padding-right: 2px;
-  }
-
-  .support-chat-empty {
-    text-align: center;
-    color: #666;
-    font-size: 13px;
-    padding: 20px 0;
-  }
-
-  .chat-bubble {
-    max-width: 80%;
-    padding: 8px 12px;
-    border-radius: 12px;
-    font-size: 13px;
-    line-height: 1.4;
-    word-break: break-word;
-    white-space: pre-wrap;
-  }
-
-  .chat-bubble-admin-side {
-    align-self: flex-end;
-    background: linear-gradient(90deg, #ffb800, #ff7a00);
-    color: #1a1a1a;
-    border-radius: 12px 12px 3px 12px;
-  }
-
-  .chat-bubble-user-side {
-    align-self: flex-start;
-    background: #0e0e12;
-    border: 1px solid #24242e;
-    color: #eee;
-    border-radius: 12px 12px 12px 3px;
-  }
-
-  .chat-bubble-time {
-    font-size: 10px;
-    opacity: 0.65;
-    margin-top: 4px;
-  }
-
-  .support-chat-input-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-  }
-
-  .support-chat-input-row textarea {
-    flex: 1;
-    background: #0e0e12;
-    border: 1px solid #2a2a35;
-    border-radius: 10px;
-    padding: 10px;
-    color: #fff;
-    font-size: 13px;
-    font-family: inherit;
-    resize: none;
-    min-height: 40px;
-    max-height: 100px;
-  }
-
-  .support-chat-input-row textarea:focus { outline: none; border-color: #ffb800; }
-
-  .support-chat-send-btn {
-    background: linear-gradient(90deg, #ffb800, #ff7a00);
-    color: #1a1a1a;
-    font-weight: 700;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 16px;
-    cursor: pointer;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-
-  .support-chat-send-btn:disabled { opacity: 0.5; cursor: default; }
-
-  .support-conv-unread {
-    border-color: #ffb800;
-  }
-
-  .support-conv-unread .support-conv-name {
-    color: #ffb800;
-  }
-
-  .support-filter-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 14px;
-  }
-
-  .chat-bubble-system {
-    align-self: center;
-    background: transparent;
-    color: #888;
-    font-size: 11px;
-    text-align: center;
-    max-width: 90%;
-    padding: 2px 0;
-  }
-
-  .chat-bubble-system .chat-bubble-time { display: none; }
-
-  .support-chat-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-
-  .support-chat-actions {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
-  .support-chat-actions button {
-    flex: 1;
-    font-size: 12px;
-  }
-
-  /* Пользователи */
-  .balance-edit { display: flex; gap: 6px; margin-top: 8px; }
-  .balance-edit input {
-    flex: 1;
-    background: #0e0e12;
-    border: 1px solid #2a2a35;
-    border-radius: 8px;
-    padding: 8px;
-    color: #fff;
-    font-size: 13px;
-  }
-
-  /* Кейсы */
-  .case-item-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 90px 70px 70px 30px;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-
-  .case-item-row input, .case-item-row select {
-    background: #0e0e12;
-    border: 1px solid #2a2a35;
-    border-radius: 6px;
-    padding: 6px;
-    color: #fff;
-    font-size: 12px;
-    width: 100%;
-  }
-
-  .case-item-row .remove-item-btn {
-    background: #3a1e1e;
-    color: #ff8a8a;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-
-  .form-field { margin-bottom: 10px; }
-  .form-field label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; }
-  .form-field input {
-    width: 100%;
-    background: #0e0e12;
-    border: 1px solid #2a2a35;
-    border-radius: 8px;
-    padding: 10px;
-    color: #fff;
-    font-size: 13px;
-  }
-
-  .search-input {
-    width: 100%;
-    background: #17171f;
-    border: 1px solid #24242e;
-    border-radius: 10px;
-    padding: 12px;
-    color: #fff;
-    font-size: 13px;
-    margin-bottom: 14px;
-  }
-
-  .search-input:focus { outline: none; border-color: #ffb800; }
-
-  .case-thumb {
-    width: 70px;
-    height: 60px;
-    object-fit: contain;
-    background: #0e0e12;
-    border-radius: 8px;
-    float: right;
-    margin-left: 10px;
-  }
-
-  .inventory-modal-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #0e0e12;
-    border: 1px solid #24242e;
-    border-radius: 10px;
-    padding: 8px 10px;
-    margin-bottom: 8px;
-  }
-
-  .inventory-modal-item img {
-    width: 38px;
-    height: 38px;
-    object-fit: contain;
-    flex-shrink: 0;
-  }
-
-  .inventory-modal-item .inv-name {
-    font-size: 12px;
-    font-weight: 600;
-    flex: 1;
-  }
-
-  .inventory-modal-item .inv-value {
-    font-size: 12px;
-    color: #ffb800;
-    font-weight: 700;
-  }
-
-  .fab-add {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: linear-gradient(90deg, #ffb800, #ff7a00);
-    color: #1a1a1a;
-    font-weight: 700;
-    border: none;
-    border-radius: 30px;
-    padding: 14px 22px;
-    cursor: pointer;
-    font-size: 14px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-    z-index: 10;
-  }
-
-  .modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.75);
-    z-index: 50;
-    display: none;
-    align-items: flex-start;
-    justify-content: center;
-    overflow-y: auto;
-    padding: 20px;
-  }
-
-  .modal-overlay.active { display: flex; }
-
-  .modal-card {
-    background: #17171f;
-    border-radius: 16px;
-    padding: 20px;
-    width: 100%;
-    max-width: 420px;
-    margin-top: 20px;
-  }
-
-  .modal-card h2 { font-size: 15px; margin-bottom: 16px; }
-
-  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #15151b;
+      --surface-alt: #121218;
+      --surface-input: #0a0a0f;
+      --border: #232330;
+      --border-light: #2c2c3a;
+      --accent: #C6FF1E;
+      --accent-dark: #9FE000;
+      --text: #ffffff;
+      --text-muted: #8a8a95;
+      --text-dim: #63636e;
+      --danger-bg: #3a1e1e;
+      --danger-text: #ff8a8a;
+      --danger-border: #5a2a2a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    h1, h2, .value, .balance, .support-conv-name, .status-badge, .stat-value {
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    /* ===== Экран входа ===== */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(198,255,30,0.06), transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(198,255,30,0.04), transparent 45%),
+        var(--bg);
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 34px 26px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+    }
+
+    .login-lock {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 22px;
+    }
+
+    .login-card h1 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 22px;
+      letter-spacing: -0.2px;
+    }
+
+    .login-card input {
+      width: 100%;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s ease;
+    }
+
+    .login-card input:focus { outline: none; border-color: var(--accent); }
+
+    .btn {
+      background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      color: #10130a;
+      font-weight: 700;
+      border: none;
+      padding: 13px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 14px;
+      transition: filter 0.15s ease, transform 0.1s ease;
+    }
+
+    .btn:hover { filter: brightness(1.08); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-secondary {
+      background: var(--surface-alt);
+      color: var(--text);
+      font-weight: 600;
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-secondary:hover { border-color: var(--border-light); background: #1a1a22; }
+    .btn-secondary:disabled { opacity: 0.45; cursor: default; }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      font-weight: 600;
+      border: 1px solid var(--danger-border);
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: filter 0.15s ease;
+    }
+
+    .btn-danger:hover { filter: brightness(1.15); }
+    .btn-danger:disabled { opacity: 0.45; cursor: default; }
+
+    .error-text { color: #ff5f5f; font-size: 12px; margin-top: 8px; min-height: 14px; }
+
+    /* ===== Основной экран ===== */
+    #app-screen { display: none; padding-bottom: 40px; }
+
+    .header {
+      padding: 14px 16px;
+      background: var(--surface-alt);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-logo svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+
+    .header-tag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: #10130a;
+      background: var(--accent);
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .tabs {
+      display: flex;
+      overflow-x: auto;
+      background: var(--surface-alt);
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 13px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s ease;
+    }
+
+    .tab-btn .tab-icon { font-size: 14px; }
+
+    .tab-btn:hover { color: #ccc; }
+
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-content { display: none; padding: 16px; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s ease;
+    }
+
+    .card-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .card-row .label { color: var(--text-muted); flex-shrink: 0; }
+    .card-row .value { font-weight: 600; text-align: right; word-break: break-all; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .status-pending { background: #3a2f10; color: #ffb800; }
+    .status-accepted { background: #10283a; color: #4da6ff; }
+    .status-trade_sent { background: #2a1a3a; color: #b34dff; }
+    .status-received { background: #123a1a; color: #4dff88; }
+    .status-waiting { background: #3a2f10; color: #ffb800; }
+    .status-finished { background: #123a1a; color: #4dff88; }
+    .status-new { background: #3a2f10; color: #ffb800; }
+    .status-in_progress { background: #10283a; color: #4da6ff; }
+    .status-closed { background: #123a1a; color: #4dff88; }
+
+    .card-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .card-actions .btn-secondary, .card-actions .btn-danger { flex: 1; min-width: 120px; text-align: center; }
+
+    .loading-text, .empty-text {
+      color: var(--text-dim);
+      font-size: 13px;
+      padding: 30px 0;
+      text-align: center;
+    }
+
+    /* Поддержка: список диалогов */
+    .support-conv-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .support-conv-card:hover { border-color: var(--border-light); }
+
+    .support-conv-info { min-width: 0; flex: 1; }
+
+    .support-conv-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .support-conv-preview {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .support-conv-meta {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .support-conv-time {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .support-unread-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #10130a;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 2px 8px;
+      margin-top: 4px;
+    }
+
+    .support-conv-unread {
+      border-color: rgba(198, 255, 30, 0.45);
+    }
+
+    .support-conv-unread .support-conv-name {
+      color: var(--accent);
+    }
+
+    .support-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      cursor: pointer;
+    }
+
+    .support-filter-row input { accent-color: var(--accent); }
+
+    /* Поддержка: окно чата */
+    .support-chat-card {
+      display: flex;
+      flex-direction: column;
+      max-height: 84vh;
+    }
+
+    .support-chat-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .support-chat-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .support-chat-actions button {
+      flex: 1;
+      font-size: 12px;
+    }
+
+    .support-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-right: 2px;
+    }
+
+    .support-chat-empty {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 13px;
+      padding: 20px 0;
+    }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 9px 13px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .chat-bubble-admin-side {
+      align-self: flex-end;
+      background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      color: #10130a;
+      border-radius: 14px 14px 4px 14px;
+    }
+
+    .chat-bubble-user-side {
+      align-self: flex-start;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      color: #eee;
+      border-radius: 14px 14px 14px 4px;
+    }
+
+    .chat-bubble-system {
+      align-self: center;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 11px;
+      text-align: center;
+      max-width: 90%;
+      padding: 2px 0;
+    }
+
+    .chat-bubble-system .chat-bubble-time { display: none; }
+
+    .chat-bubble-time {
+      font-size: 10px;
+      opacity: 0.65;
+      margin-top: 4px;
+    }
+
+    .support-chat-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .support-chat-input-row textarea {
+      flex: 1;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      min-height: 42px;
+      max-height: 100px;
+      transition: border-color 0.15s ease;
+    }
+
+    .support-chat-input-row textarea:focus { outline: none; border-color: var(--accent); }
+
+    .support-chat-send-btn {
+      background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      color: #10130a;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      width: 42px;
+      height: 42px;
+      cursor: pointer;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .support-chat-send-btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* Пользователи */
+    .balance-edit { display: flex; gap: 6px; margin-top: 10px; }
+    .balance-edit input {
+      flex: 1;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px;
+      color: var(--text);
+      font-size: 13px;
+      transition: border-color 0.15s ease;
+    }
+    .balance-edit input:focus { outline: none; border-color: var(--accent); }
+
+    /* Кейсы */
+    .case-item-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 90px 70px 70px 30px;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .case-item-row input, .case-item-row select {
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px;
+      color: var(--text);
+      font-size: 12px;
+      width: 100%;
+    }
+
+    .case-item-row input:focus, .case-item-row select:focus { outline: none; border-color: var(--accent); }
+
+    .case-item-row .remove-item-btn {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .form-field { margin-bottom: 12px; }
+    .form-field label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .form-field input {
+      width: 100%;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px;
+      color: var(--text);
+      font-size: 13px;
+      transition: border-color 0.15s ease;
+    }
+    .form-field input:focus { outline: none; border-color: var(--accent); }
+
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--text);
+      font-size: 13px;
+      margin-bottom: 14px;
+      transition: border-color 0.15s ease;
+    }
+
+    .search-input:focus { outline: none; border-color: var(--accent); }
+
+    .case-thumb {
+      width: 72px;
+      height: 62px;
+      object-fit: contain;
+      background: var(--surface-input);
+      border-radius: 10px;
+      float: right;
+      margin-left: 10px;
+    }
+
+    .inventory-modal-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+
+    .inventory-modal-item img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .inventory-modal-item .inv-name {
+      font-size: 12px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .inventory-modal-item .inv-value {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .fab-add {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      color: #10130a;
+      font-weight: 700;
+      border: none;
+      border-radius: 30px;
+      padding: 14px 22px;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 6px 20px rgba(198, 255, 30, 0.25);
+      z-index: 10;
+      transition: transform 0.1s ease;
+    }
+
+    .fab-add:active { transform: scale(0.96); }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(2px);
+      z-index: 50;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      width: 100%;
+      max-width: 420px;
+      margin-top: 20px;
+    }
+
+    .modal-card h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+
+    .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+
 </style>
 </head>
 <body>
@@ -504,7 +630,8 @@
   <!-- Экран входа -->
   <div id="login-screen">
     <div class="login-card">
-      <h1>🔒 Админ-панель CS Cases</h1>
+      <div class="login-lock">🔒</div>
+      <h1>Админ-панель CS Cases</h1>
       <input type="password" id="password-input" placeholder="Пароль">
       <button class="btn" id="login-btn">Войти</button>
       <div class="error-text" id="login-error"></div>
@@ -514,16 +641,21 @@
   <!-- Основной экран -->
   <div id="app-screen">
     <div class="header">
-      <h1>🎁 Админ-панель</h1>
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4L12 18L20 4" stroke="#C6FF1E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h1>VeDrop<span class="header-tag">ADMIN</span></h1>
+      </div>
       <button class="btn-secondary" id="logout-btn">Выйти</button>
     </div>
 
     <div class="tabs">
-      <div class="tab-btn active" data-tab="withdrawals">Заявки на вывод</div>
-      <div class="tab-btn" data-tab="users">Пользователи</div>
-      <div class="tab-btn" data-tab="cases">Кейсы</div>
-      <div class="tab-btn" data-tab="payments">Платежи</div>
-      <div class="tab-btn" data-tab="support">Поддержка</div>
+      <div class="tab-btn active" data-tab="withdrawals"><span class="tab-icon">💸</span><span class="tab-label" id="tab-label-withdrawals">Выводы</span></div>
+      <div class="tab-btn" data-tab="users"><span class="tab-icon">👤</span><span class="tab-label" id="tab-label-users">Игроки</span></div>
+      <div class="tab-btn" data-tab="cases"><span class="tab-icon">🎁</span><span class="tab-label" id="tab-label-cases">Кейсы</span></div>
+      <div class="tab-btn" data-tab="payments"><span class="tab-icon">💳</span><span class="tab-label" id="tab-label-payments">Платежи</span></div>
+      <div class="tab-btn" data-tab="support"><span class="tab-icon">💬</span><span class="tab-label" id="tab-label-support">Поддержка</span></div>
     </div>
 
     <!-- Заявки на вывод -->
@@ -725,6 +857,11 @@
     try {
       const res = await apiRequest("/api/admin/withdrawals");
       const items = await res.json();
+
+      const pendingCount = items.filter(w => w.status === "pending").length;
+      const withdrawalsTabLabel = document.getElementById("tab-label-withdrawals");
+      withdrawalsTabLabel.textContent = pendingCount > 0 ? `Выводы (${pendingCount})` : "Выводы";
+
       if (items.length === 0) {
         listEl.innerHTML = `<div class="empty-text">Заявок пока нет</div>`;
         return;
@@ -1091,9 +1228,9 @@
       const res = await apiRequest(`/api/admin/support/conversations${includeClosed ? "?include_closed=true" : ""}`);
       const items = await res.json();
 
-      const tabBtn = document.querySelector('.tab-btn[data-tab="support"]');
+      const tabLabelEl = document.getElementById("tab-label-support");
       const totalUnread = items.reduce((sum, c) => sum + parseInt(c.unread_count, 10), 0);
-      tabBtn.textContent = totalUnread > 0 ? `Поддержка (${totalUnread})` : "Поддержка";
+      tabLabelEl.textContent = totalUnread > 0 ? `Поддержка (${totalUnread})` : "Поддержка";
 
       if (items.length === 0) {
         listEl.innerHTML = `<div class="empty-text">Обращений пока нет</div>`;
