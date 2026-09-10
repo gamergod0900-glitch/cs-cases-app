@@ -165,19 +165,142 @@
 
   .loading-text, .empty-text { color: #666; font-size: 13px; padding: 20px 0; text-align: center; }
 
-  /* Поддержка */
-  .support-message {
+  /* Поддержка: список диалогов */
+  .support-conv-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .support-conv-info { min-width: 0; flex: 1; }
+
+  .support-conv-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .support-conv-preview {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .support-conv-meta {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .support-conv-time {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .support-unread-badge {
+    display: inline-block;
+    background: #ffb800;
+    color: #1a1a1a;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 2px 8px;
+  }
+
+  /* Поддержка: окно чата */
+  .support-chat-card {
+    display: flex;
+    flex-direction: column;
+    max-height: 82vh;
+  }
+
+  .support-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+    padding-right: 2px;
+  }
+
+  .support-chat-empty {
+    text-align: center;
+    color: #666;
     font-size: 13px;
-    color: #ddd;
+    padding: 20px 0;
+  }
+
+  .chat-bubble {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .chat-bubble-admin-side {
+    align-self: flex-end;
+    background: linear-gradient(90deg, #ffb800, #ff7a00);
+    color: #1a1a1a;
+    border-radius: 12px 12px 3px 12px;
+  }
+
+  .chat-bubble-user-side {
+    align-self: flex-start;
     background: #0e0e12;
     border: 1px solid #24242e;
+    color: #eee;
+    border-radius: 12px 12px 12px 3px;
+  }
+
+  .chat-bubble-time {
+    font-size: 10px;
+    opacity: 0.65;
+    margin-top: 4px;
+  }
+
+  .support-chat-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .support-chat-input-row textarea {
+    flex: 1;
+    background: #0e0e12;
+    border: 1px solid #2a2a35;
     border-radius: 10px;
     padding: 10px;
-    margin: 8px 0;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    resize: none;
+    min-height: 40px;
+    max-height: 100px;
   }
+
+  .support-chat-input-row textarea:focus { outline: none; border-color: #ffb800; }
+
+  .support-chat-send-btn {
+    background: linear-gradient(90deg, #ffb800, #ff7a00);
+    color: #1a1a1a;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .support-chat-send-btn:disabled { opacity: 0.5; cursor: default; }
 
   /* Пользователи */
   .balance-edit { display: flex; gap: 6px; margin-top: 8px; }
@@ -426,6 +549,20 @@
       <div class="modal-actions">
         <button class="btn" id="case-save-btn">Сохранить</button>
         <button class="btn-secondary" id="case-cancel-btn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+<div class="modal-overlay" id="support-chat-modal">
+    <div class="modal-card support-chat-card">
+      <h2 id="support-chat-title">Чат</h2>
+      <div id="support-chat-messages" class="support-chat-messages"></div>
+      <div class="support-chat-input-row">
+        <textarea id="support-chat-input" placeholder="Напиши ответ игроку..."></textarea>
+        <button class="support-chat-send-btn" id="support-chat-send-btn">➤</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="support-chat-close-btn" style="width:100%;">Закрыть</button>
       </div>
     </div>
   </div>
@@ -866,54 +1003,128 @@
     }
   }
 
-  // ===== Поддержка =====
+  // ===== Поддержка: список диалогов =====
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   async function loadSupport() {
     const listEl = document.getElementById("support-list");
     listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
     try {
-      const res = await apiRequest("/api/admin/support");
+      const res = await apiRequest("/api/admin/support/conversations");
       const items = await res.json();
+
+      const tabBtn = document.querySelector('.tab-btn[data-tab="support"]');
+      const totalUnread = items.reduce((sum, c) => sum + parseInt(c.unread_count, 10), 0);
+      tabBtn.textContent = totalUnread > 0 ? `Поддержка (${totalUnread})` : "Поддержка";
+
       if (items.length === 0) {
         listEl.innerHTML = `<div class="empty-text">Обращений пока нет</div>`;
         return;
       }
       listEl.innerHTML = "";
-      items.forEach(s => {
-        const playerLabel = s.username ? `@${s.username}` : (s.first_name || `ID ${s.telegram_id}`);
+      items.forEach(c => {
+        const playerLabel = c.username ? `@${c.username}` : (c.first_name || `ID ${c.telegram_id}`);
+        const unread = parseInt(c.unread_count, 10);
+        const prefix = c.last_sender === "admin" ? "Вы: " : "";
         const card = document.createElement("div");
-        card.className = "card";
-        const actionsHtml = s.status === "open"
-          ? `<button class="btn-secondary" data-resolve="${s.id}">Отметить решённым</button>`
-          : "";
+        card.className = "card support-conv-card";
         card.innerHTML = `
-          <div class="card-row"><span class="label">Игрок</span><span class="value">${playerLabel} (id ${s.telegram_id})</span></div>
-          <div class="card-row"><span class="label">Дата</span><span class="value">${formatDate(s.created_at)}</span></div>
-          <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${s.status}">${statusLabels[s.status] || s.status}</span></div>
-          <div class="support-message">${s.message}</div>
-          <div class="card-actions">${actionsHtml}</div>
+          <div class="support-conv-info">
+            <div class="support-conv-name">${playerLabel}</div>
+            <div class="support-conv-preview">${prefix}${escapeHtml(c.last_message || "")}</div>
+          </div>
+          <div class="support-conv-meta">
+            <div class="support-conv-time">${formatDate(c.last_at)}</div>
+            ${unread > 0 ? `<span class="support-unread-badge">${unread}</span>` : ""}
+          </div>
         `;
+        card.addEventListener("click", () => openSupportChat(c.telegram_id, playerLabel));
         listEl.appendChild(card);
-      });
-
-      listEl.querySelectorAll("button[data-resolve]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          btn.disabled = true;
-          try {
-            await apiRequest(`/api/admin/support/${btn.dataset.resolve}/status`, {
-              method: "POST",
-              body: JSON.stringify({ status: "resolved" })
-            });
-            loadSupport();
-          } catch (err) {
-            alert("Не удалось обновить статус");
-            btn.disabled = false;
-          }
-        });
       });
     } catch (err) {
       listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
     }
   }
+
+  // ===== Поддержка: окно чата с конкретным игроком =====
+  const supportChatModal = document.getElementById("support-chat-modal");
+  const supportChatMessages = document.getElementById("support-chat-messages");
+  const supportChatInput = document.getElementById("support-chat-input");
+  const supportChatSendBtn = document.getElementById("support-chat-send-btn");
+  let currentChatTelegramId = null;
+  let supportChatPollInterval = null;
+
+  async function openSupportChat(telegramId, label) {
+    currentChatTelegramId = telegramId;
+    document.getElementById("support-chat-title").textContent = label;
+    supportChatMessages.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    supportChatModal.classList.add("active");
+    await loadChatThread();
+    clearInterval(supportChatPollInterval);
+    supportChatPollInterval = setInterval(loadChatThread, 4000);
+  }
+
+  async function loadChatThread() {
+    if (!currentChatTelegramId) return;
+    try {
+      const res = await apiRequest(`/api/admin/support/${currentChatTelegramId}/messages`);
+      const messages = await res.json();
+      renderChatThread(messages);
+      loadSupport(); // обновляем счётчик непрочитанных в списке диалогов на фоне
+    } catch (err) {
+      supportChatMessages.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+    }
+  }
+
+  function renderChatThread(messages) {
+    const wasAtBottom = supportChatMessages.scrollTop + supportChatMessages.clientHeight >= supportChatMessages.scrollHeight - 40;
+    if (messages.length === 0) {
+      supportChatMessages.innerHTML = `<div class="support-chat-empty">Сообщений пока нет</div>`;
+      return;
+    }
+    supportChatMessages.innerHTML = messages.map(m => {
+      const time = formatDate(m.created_at);
+      const cls = m.sender === "admin" ? "chat-bubble-admin-side" : "chat-bubble-user-side";
+      return `<div class="chat-bubble ${cls}">${escapeHtml(m.message)}<div class="chat-bubble-time">${time}</div></div>`;
+    }).join("");
+    if (wasAtBottom) supportChatMessages.scrollTop = supportChatMessages.scrollHeight;
+  }
+
+  document.getElementById("support-chat-close-btn").addEventListener("click", () => {
+    supportChatModal.classList.remove("active");
+    clearInterval(supportChatPollInterval);
+    currentChatTelegramId = null;
+  });
+
+  async function sendSupportReply() {
+    const message = supportChatInput.value.trim();
+    if (!message || !currentChatTelegramId) return;
+    supportChatInput.value = "";
+    supportChatSendBtn.disabled = true;
+    try {
+      await apiRequest(`/api/admin/support/${currentChatTelegramId}/send`, {
+        method: "POST",
+        body: JSON.stringify({ message })
+      });
+      await loadChatThread();
+    } catch (err) {
+      alert("Не удалось отправить ответ");
+    }
+    supportChatSendBtn.disabled = false;
+    supportChatInput.focus();
+  }
+
+  supportChatSendBtn.addEventListener("click", sendSupportReply);
+  supportChatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendSupportReply();
+    }
+  });
 </script>
 
 </body>
