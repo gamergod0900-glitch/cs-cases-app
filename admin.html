@@ -158,8 +158,9 @@
   .status-received { background: #123a1a; color: #4dff88; }
   .status-waiting { background: #3a2f10; color: #ffb800; }
   .status-finished { background: #123a1a; color: #4dff88; }
-  .status-open { background: #3a2f10; color: #ffb800; }
-  .status-resolved { background: #123a1a; color: #4dff88; }
+  .status-new { background: #3a2f10; color: #ffb800; }
+  .status-in_progress { background: #10283a; color: #4da6ff; }
+  .status-closed { background: #123a1a; color: #4dff88; }
 
   .card-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -301,6 +302,54 @@
   }
 
   .support-chat-send-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .support-conv-unread {
+    border-color: #ffb800;
+  }
+
+  .support-conv-unread .support-conv-name {
+    color: #ffb800;
+  }
+
+  .support-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 14px;
+  }
+
+  .chat-bubble-system {
+    align-self: center;
+    background: transparent;
+    color: #888;
+    font-size: 11px;
+    text-align: center;
+    max-width: 90%;
+    padding: 2px 0;
+  }
+
+  .chat-bubble-system .chat-bubble-time { display: none; }
+
+  .support-chat-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .support-chat-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .support-chat-actions button {
+    flex: 1;
+    font-size: 12px;
+  }
 
   /* Пользователи */
   .balance-edit { display: flex; gap: 6px; margin-top: 8px; }
@@ -501,6 +550,9 @@
 
     <!-- Поддержка -->
     <div class="tab-content" id="tab-support">
+      <label class="support-filter-row">
+        <input type="checkbox" id="support-show-closed"> Показать закрытые диалоги
+      </label>
       <div id="support-list" class="loading-text">Загрузка...</div>
     </div>
   </div>
@@ -555,14 +607,21 @@
 
 <div class="modal-overlay" id="support-chat-modal">
     <div class="modal-card support-chat-card">
-      <h2 id="support-chat-title">Чат</h2>
+      <div class="support-chat-header-row">
+        <h2 id="support-chat-title">Чат</h2>
+        <span class="status-badge" id="support-chat-status"></span>
+      </div>
+      <div class="support-chat-actions">
+        <button class="btn-secondary" id="support-claim-btn" style="display:none;">Взять на рассмотрение</button>
+        <button class="btn-danger" id="support-end-btn">Завершить диалог</button>
+      </div>
       <div id="support-chat-messages" class="support-chat-messages"></div>
       <div class="support-chat-input-row">
         <textarea id="support-chat-input" placeholder="Напиши ответ игроку..."></textarea>
         <button class="support-chat-send-btn" id="support-chat-send-btn">➤</button>
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" id="support-chat-close-btn" style="width:100%;">Закрыть</button>
+        <button class="btn-secondary" id="support-chat-close-btn" style="width:100%;">Закрыть окно</button>
       </div>
     </div>
   </div>
@@ -611,6 +670,7 @@
     adminPassword = "";
     appScreen.style.display = "none";
     loginScreen.style.display = "flex";
+    clearInterval(supportBackgroundInterval);
   });
 
   function showApp() {
@@ -621,6 +681,9 @@
     loadCases();
     loadPayments();
     loadSupport();
+    // Тихий фоновый опрос новых обращений в поддержку — работает независимо от того, какая вкладка открыта
+    clearInterval(supportBackgroundInterval);
+    supportBackgroundInterval = setInterval(() => loadSupport(true), 6000);
   }
 
   // Автовход, если пароль уже сохранён в этом браузере
@@ -1010,11 +1073,22 @@
     return div.innerHTML;
   }
 
-  async function loadSupport() {
+  const supportStatusLabels = {
+    new: "🆕 Новое",
+    in_progress: "🔍 В работе",
+    closed: "✅ Закрыт"
+  };
+
+  let supportBackgroundInterval = null;
+
+  // silent = true: обновляем список без мигания "Загрузка..." — используется для фонового опроса
+  async function loadSupport(silent = false) {
     const listEl = document.getElementById("support-list");
-    listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    const includeClosed = document.getElementById("support-show-closed").checked;
+    const scrollPos = listEl.scrollTop;
+    if (!silent) listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
     try {
-      const res = await apiRequest("/api/admin/support/conversations");
+      const res = await apiRequest(`/api/admin/support/conversations${includeClosed ? "?include_closed=true" : ""}`);
       const items = await res.json();
 
       const tabBtn = document.querySelector('.tab-btn[data-tab="support"]');
@@ -1029,9 +1103,9 @@
       items.forEach(c => {
         const playerLabel = c.username ? `@${c.username}` : (c.first_name || `ID ${c.telegram_id}`);
         const unread = parseInt(c.unread_count, 10);
-        const prefix = c.last_sender === "admin" ? "Вы: " : "";
+        const prefix = c.last_sender === "admin" ? "Вы: " : (c.last_sender === "system" ? "" : "");
         const card = document.createElement("div");
-        card.className = "card support-conv-card";
+        card.className = "card support-conv-card" + (unread > 0 ? " support-conv-unread" : "");
         card.innerHTML = `
           <div class="support-conv-info">
             <div class="support-conv-name">${playerLabel}</div>
@@ -1039,22 +1113,29 @@
           </div>
           <div class="support-conv-meta">
             <div class="support-conv-time">${formatDate(c.last_at)}</div>
-            ${unread > 0 ? `<span class="support-unread-badge">${unread}</span>` : ""}
+            <span class="status-badge status-${c.status}" style="margin-bottom:4px; display:inline-block;">${supportStatusLabels[c.status] || c.status}</span>
+            ${unread > 0 ? `<div class="support-unread-badge">${unread}</div>` : ""}
           </div>
         `;
         card.addEventListener("click", () => openSupportChat(c.telegram_id, playerLabel));
         listEl.appendChild(card);
       });
+      if (silent) listEl.scrollTop = scrollPos;
     } catch (err) {
-      listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+      if (!silent) listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
     }
   }
+
+  document.getElementById("support-show-closed").addEventListener("change", () => loadSupport());
 
   // ===== Поддержка: окно чата с конкретным игроком =====
   const supportChatModal = document.getElementById("support-chat-modal");
   const supportChatMessages = document.getElementById("support-chat-messages");
   const supportChatInput = document.getElementById("support-chat-input");
   const supportChatSendBtn = document.getElementById("support-chat-send-btn");
+  const supportClaimBtn = document.getElementById("support-claim-btn");
+  const supportEndBtn = document.getElementById("support-end-btn");
+  const supportChatStatusEl = document.getElementById("support-chat-status");
   let currentChatTelegramId = null;
   let supportChatPollInterval = null;
 
@@ -1072,12 +1153,19 @@
     if (!currentChatTelegramId) return;
     try {
       const res = await apiRequest(`/api/admin/support/${currentChatTelegramId}/messages`);
-      const messages = await res.json();
-      renderChatThread(messages);
-      loadSupport(); // обновляем счётчик непрочитанных в списке диалогов на фоне
+      const data = await res.json();
+      renderChatThread(data.messages);
+      updateChatStatus(data.status);
+      loadSupport(true); // тихо обновляем список диалогов на фоне
     } catch (err) {
       supportChatMessages.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
     }
+  }
+
+  function updateChatStatus(status) {
+    supportChatStatusEl.textContent = supportStatusLabels[status] || status;
+    supportChatStatusEl.className = `status-badge status-${status}`;
+    supportClaimBtn.style.display = status === "new" ? "block" : "none";
   }
 
   function renderChatThread(messages) {
@@ -1088,7 +1176,7 @@
     }
     supportChatMessages.innerHTML = messages.map(m => {
       const time = formatDate(m.created_at);
-      const cls = m.sender === "admin" ? "chat-bubble-admin-side" : "chat-bubble-user-side";
+      const cls = m.sender === "admin" ? "chat-bubble-admin-side" : (m.sender === "system" ? "chat-bubble-system" : "chat-bubble-user-side");
       return `<div class="chat-bubble ${cls}">${escapeHtml(m.message)}<div class="chat-bubble-time">${time}</div></div>`;
     }).join("");
     if (wasAtBottom) supportChatMessages.scrollTop = supportChatMessages.scrollHeight;
@@ -1124,6 +1212,34 @@
       e.preventDefault();
       sendSupportReply();
     }
+  });
+
+  supportClaimBtn.addEventListener("click", async () => {
+    if (!currentChatTelegramId) return;
+    supportClaimBtn.disabled = true;
+    try {
+      await apiRequest(`/api/admin/support/${currentChatTelegramId}/claim`, { method: "POST" });
+      await loadChatThread();
+    } catch (err) {
+      alert("Не удалось выполнить действие");
+    }
+    supportClaimBtn.disabled = false;
+  });
+
+  supportEndBtn.addEventListener("click", async () => {
+    if (!currentChatTelegramId) return;
+    if (!confirm("Завершить диалог? Игрок получит уведомление, что проблема решена. Переписка у него сохранится.")) return;
+    supportEndBtn.disabled = true;
+    try {
+      await apiRequest(`/api/admin/support/${currentChatTelegramId}/close`, { method: "POST" });
+      supportChatModal.classList.remove("active");
+      clearInterval(supportChatPollInterval);
+      currentChatTelegramId = null;
+      loadSupport();
+    } catch (err) {
+      alert("Не удалось завершить диалог");
+    }
+    supportEndBtn.disabled = false;
   });
 </script>
 
