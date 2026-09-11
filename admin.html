@@ -623,6 +623,197 @@
 
     .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
 
+    /* ===== Мини-статистика сверху вкладок ===== */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-mini {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-mini-value {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.2;
+    }
+
+    .stat-mini-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* ===== Аватарки и заголовок карточки ===== */
+    .avatar-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #10130a;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .avatar-circle-sm {
+      width: 34px;
+      height: 34px;
+      font-size: 13px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card-header-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-header-name {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-header-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== Акцентный блок (сумма/цена/баланс) ===== */
+    .card-highlight {
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .card-highlight-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .card-highlight-value {
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    /* ===== Пилюли-бейджи (мини-метрики) ===== */
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 11px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* ===== Строка трейд-ссылки с кнопкой копирования ===== */
+    .trade-link-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      margin-bottom: 10px;
+    }
+
+    .trade-link-text {
+      flex: 1;
+      font-size: 11px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: monospace;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      flex-shrink: 0;
+      padding: 2px;
+    }
+
+    .copy-btn:hover { color: var(--accent); }
+
+    /* ===== Кейсы: превью и цветные чипы предметов по редкости ===== */
+    .case-thumb-lg {
+      width: 54px;
+      height: 46px;
+      object-fit: contain;
+      background: var(--surface-input);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .item-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .item-chip {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+      white-space: nowrap;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .item-chip.rarity-common { border-color: #565660; color: #a3a3ad; }
+    .item-chip.rarity-rare { border-color: #4da6ff; color: #4da6ff; }
+    .item-chip.rarity-epic { border-color: #b34dff; color: #b34dff; }
+    .item-chip.rarity-legendary { border-color: #ffb800; color: #ffb800; }
+
 </style>
 </head>
 <body>
@@ -660,28 +851,33 @@
 
     <!-- Заявки на вывод -->
     <div class="tab-content active" id="tab-withdrawals">
+      <div class="stats-bar" id="withdrawals-stats"></div>
       <div id="withdrawals-list" class="loading-text">Загрузка...</div>
     </div>
 
     <!-- Пользователи -->
     <div class="tab-content" id="tab-users">
+      <div class="stats-bar" id="users-stats"></div>
       <input type="text" id="users-search" placeholder="Поиск по ID или @юзернейму" class="search-input">
       <div id="users-list" class="loading-text">Загрузка...</div>
     </div>
 
     <!-- Кейсы -->
     <div class="tab-content" id="tab-cases">
+      <div class="stats-bar" id="cases-stats"></div>
       <div id="cases-list" class="loading-text">Загрузка...</div>
       <button class="fab-add" id="add-case-btn">+ Кейс</button>
     </div>
 
     <!-- Платежи -->
     <div class="tab-content" id="tab-payments">
+      <div class="stats-bar" id="payments-stats"></div>
       <div id="payments-list" class="loading-text">Загрузка...</div>
     </div>
 
     <!-- Поддержка -->
     <div class="tab-content" id="tab-support">
+      <div class="stats-bar" id="support-stats"></div>
       <label class="support-filter-row">
         <input type="checkbox" id="support-show-closed"> Показать закрытые диалоги
       </label>
@@ -851,6 +1047,23 @@
   };
 
   // ===== Заявки на вывод =====
+  function avatarInitial(label) {
+    return (label || "?").replace("@", "").trim().charAt(0).toUpperCase() || "?";
+  }
+
+  function attachCopyButtons(root) {
+    root.querySelectorAll("button[data-copy]").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+          const old = btn.textContent;
+          btn.textContent = "✅";
+          setTimeout(() => { btn.textContent = old; }, 1200);
+        }).catch(() => {});
+      });
+    });
+  }
+
   async function loadWithdrawals() {
     const listEl = document.getElementById("withdrawals-list");
     listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
@@ -858,12 +1071,17 @@
       const res = await apiRequest("/api/admin/withdrawals");
       const items = await res.json();
 
-      const pendingCount = items.filter(w => w.status === "pending").length;
+      const pendingItems = items.filter(w => w.status === "pending");
+      const pendingValue = pendingItems.reduce((sum, w) => sum + w.item_value, 0);
       const withdrawalsTabLabel = document.getElementById("tab-label-withdrawals");
-      withdrawalsTabLabel.textContent = pendingCount > 0 ? `Выводы (${pendingCount})` : "Выводы";
+      withdrawalsTabLabel.textContent = pendingItems.length > 0 ? `Выводы (${pendingItems.length})` : "Выводы";
+      document.getElementById("withdrawals-stats").innerHTML = `
+        <div class="stat-mini"><div class="stat-mini-value">${pendingItems.length}</div><div class="stat-mini-label">Ожидают действия</div></div>
+        <div class="stat-mini"><div class="stat-mini-value">${pendingValue.toLocaleString("ru-RU")} ₴</div><div class="stat-mini-label">Сумма к выводу</div></div>
+      `;
 
       if (items.length === 0) {
-        listEl.innerHTML = `<div class="empty-text">Заявок пока нет</div>`;
+        listEl.innerHTML = `<div class="empty-text">📭 Заявок пока нет</div>`;
         return;
       }
       listEl.innerHTML = "";
@@ -880,16 +1098,28 @@
           actionsHtml = `<button class="btn-secondary" data-action="received" data-id="${w.id}">Получено</button>`;
         }
         card.innerHTML = `
-          <div class="card-row"><span class="label">Игрок</span><span class="value">${playerLabel}</span></div>
-          <div class="card-row"><span class="label">Предмет</span><span class="value">${w.item_name}</span></div>
-          <div class="card-row"><span class="label">Ценность</span><span class="value">${w.item_value} ₴</span></div>
-          <div class="card-row"><span class="label">Трейд-ссылка</span><span class="value">${w.trade_link}</span></div>
-          <div class="card-row"><span class="label">Дата</span><span class="value">${formatDate(w.requested_at)}</span></div>
-          <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${w.status}">${statusLabels[w.status] || w.status}</span></div>
+          <div class="card-header">
+            <div class="avatar-circle">${avatarInitial(playerLabel)}</div>
+            <div class="card-header-info">
+              <div class="card-header-name">${playerLabel}</div>
+              <div class="card-header-sub">${formatDate(w.requested_at)}</div>
+            </div>
+            <span class="status-badge status-${w.status}">${statusLabels[w.status] || w.status}</span>
+          </div>
+          <div class="card-highlight">
+            <div class="card-highlight-title">🎁 ${w.item_name}</div>
+            <div class="card-highlight-value">${w.item_value} ₴</div>
+          </div>
+          <div class="trade-link-row">
+            <span class="trade-link-text">${w.trade_link}</span>
+            <button class="copy-btn" data-copy="${w.trade_link}" title="Скопировать">📋</button>
+          </div>
           <div class="card-actions">${actionsHtml}</div>
         `;
         listEl.appendChild(card);
       });
+
+      attachCopyButtons(listEl);
 
       listEl.querySelectorAll("button[data-action]").forEach(btn => {
         btn.addEventListener("click", async () => {
@@ -920,6 +1150,13 @@
     try {
       const res = await apiRequest("/api/admin/users");
       allUsers = await res.json();
+
+      const totalBalance = allUsers.reduce((sum, u) => sum + u.balance, 0);
+      document.getElementById("users-stats").innerHTML = `
+        <div class="stat-mini"><div class="stat-mini-value">${allUsers.length}</div><div class="stat-mini-label">Игроков</div></div>
+        <div class="stat-mini"><div class="stat-mini-value">${totalBalance.toLocaleString("ru-RU")} ₴</div><div class="stat-mini-label">Баланс всех игроков</div></div>
+      `;
+
       renderUsersList(allUsers);
     } catch (err) {
       listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
@@ -929,7 +1166,7 @@
   function renderUsersList(items) {
     const listEl = document.getElementById("users-list");
     if (items.length === 0) {
-      listEl.innerHTML = `<div class="empty-text">Никого не найдено</div>`;
+      listEl.innerHTML = `<div class="empty-text">🔍 Никого не найдено</div>`;
       return;
     }
     listEl.innerHTML = "";
@@ -938,11 +1175,21 @@
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
-        <div class="card-row"><span class="label">Игрок</span><span class="value">${label} (id ${u.telegram_id})</span></div>
-        <div class="card-row"><span class="label">Баланс</span><span class="value">${u.balance} ₴</span></div>
-        <div class="card-row"><span class="label">Кейсов открыто</span><span class="value">${u.cases_opened}</span></div>
-        <div class="card-row"><span class="label">Предметов в инвентаре</span><span class="value">${u.inventory_count}</span></div>
-        <div class="card-row"><span class="label">Регистрация</span><span class="value">${formatDate(u.created_at)}</span></div>
+        <div class="card-header">
+          <div class="avatar-circle">${avatarInitial(label)}</div>
+          <div class="card-header-info">
+            <div class="card-header-name">${label}</div>
+            <div class="card-header-sub">id ${u.telegram_id} · с ${formatDate(u.created_at)}</div>
+          </div>
+        </div>
+        <div class="card-highlight">
+          <div class="card-highlight-title">Баланс</div>
+          <div class="card-highlight-value">${u.balance.toLocaleString("ru-RU")} ₴</div>
+        </div>
+        <div class="pill-row">
+          <span class="pill">🎁 ${u.cases_opened} открыто</span>
+          <span class="pill">📦 ${u.inventory_count} в инвентаре</span>
+        </div>
         <div class="balance-edit">
           <input type="number" placeholder="Новый баланс" id="balance-input-${u.telegram_id}">
           <button class="btn-secondary" data-save-balance="${u.telegram_id}">Сохранить</button>
@@ -1037,25 +1284,34 @@
     try {
       const res = await apiRequest("/api/admin/cases");
       const items = await res.json();
+
+      const totalItems = items.reduce((sum, c) => sum + c.items.length, 0);
+      document.getElementById("cases-stats").innerHTML = `
+        <div class="stat-mini"><div class="stat-mini-value">${items.length}</div><div class="stat-mini-label">Кейсов</div></div>
+        <div class="stat-mini"><div class="stat-mini-value">${totalItems}</div><div class="stat-mini-label">Предметов всего</div></div>
+      `;
+
       if (items.length === 0) {
-        listEl.innerHTML = `<div class="empty-text">Кейсов пока нет</div>`;
+        listEl.innerHTML = `<div class="empty-text">🎁 Кейсов пока нет</div>`;
         return;
       }
       listEl.innerHTML = "";
       items.forEach(c => {
         const card = document.createElement("div");
         card.className = "card";
-        const itemsSummary = c.items.map(i => `${i.name} (${i.rarity}, ${i.weight}%, ${i.value}₴)`).join("<br>");
+        const itemsChips = c.items
+          .map(i => `<span class="item-chip rarity-${i.rarity}">${i.name} · ${i.weight}% · ${i.value}₴</span>`)
+          .join("");
         card.innerHTML = `
-          <img src="${c.image}" alt="${c.name}" class="case-thumb">
-          <div class="card-row"><span class="label">Название</span><span class="value">${c.name}</span></div>
-          <div class="card-row"><span class="label">ID</span><span class="value">${c.id}</span></div>
-          <div class="card-row"><span class="label">Цена</span><span class="value">${c.price} ₴</span></div>
-          <div class="card-row"><span class="label">Картинка</span><span class="value">${c.image}</span></div>
-          <div class="card-row" style="flex-direction:column; align-items:flex-start; gap:4px; clear:both;">
-            <span class="label">Предметы (${c.items.length})</span>
-            <span class="value" style="text-align:left; font-weight:400; font-size:12px;">${itemsSummary}</span>
+          <div class="card-header">
+            <img src="${c.image}" alt="${c.name}" class="case-thumb-lg">
+            <div class="card-header-info">
+              <div class="card-header-name">${c.name}</div>
+              <div class="card-header-sub">ID: ${c.id} · ${c.items.length} предметов</div>
+            </div>
+            <div class="card-highlight-value">${c.price} ₴</div>
           </div>
+          <div class="item-chip-list">${itemsChips}</div>
           <div class="card-actions">
             <button class="btn-secondary" data-edit="${c.id}">Редактировать</button>
             <button class="btn-danger" data-delete="${c.id}">Удалить</button>
@@ -1182,8 +1438,15 @@
     try {
       const res = await apiRequest("/api/admin/payments");
       const items = await res.json();
+
+      const finishedTotal = items.filter(p => p.status === "finished").reduce((sum, p) => sum + p.amount_uah, 0);
+      document.getElementById("payments-stats").innerHTML = `
+        <div class="stat-mini"><div class="stat-mini-value">${items.length}</div><div class="stat-mini-label">Платежей</div></div>
+        <div class="stat-mini"><div class="stat-mini-value">${finishedTotal.toLocaleString("ru-RU")} ₴</div><div class="stat-mini-label">Зачислено всего</div></div>
+      `;
+
       if (items.length === 0) {
-        listEl.innerHTML = `<div class="empty-text">Платежей пока нет</div>`;
+        listEl.innerHTML = `<div class="empty-text">💳 Платежей пока нет</div>`;
         return;
       }
       listEl.innerHTML = "";
@@ -1195,12 +1458,19 @@
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
-          <div class="card-row"><span class="label">Игрок</span><span class="value">${playerLabel}</span></div>
-          <div class="card-row"><span class="label">Способ</span><span class="value">${paymentMethodLabels[p.method] || p.method}</span></div>
-          <div class="card-row"><span class="label">Сумма</span><span class="value">${amountLine}</span></div>
-          <div class="card-row"><span class="label">Order ID</span><span class="value">${p.order_id}</span></div>
-          <div class="card-row"><span class="label">Дата</span><span class="value">${formatDate(p.created_at)}</span></div>
-          <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${p.status}">${statusLabels[p.status] || p.status}</span></div>
+          <div class="card-header">
+            <div class="avatar-circle">${avatarInitial(playerLabel)}</div>
+            <div class="card-header-info">
+              <div class="card-header-name">${playerLabel}</div>
+              <div class="card-header-sub">${formatDate(p.created_at)} · ${paymentMethodLabels[p.method] || p.method}</div>
+            </div>
+            <span class="status-badge status-${p.status}">${statusLabels[p.status] || p.status}</span>
+          </div>
+          <div class="card-highlight">
+            <div class="card-highlight-title">Сумма</div>
+            <div class="card-highlight-value">${amountLine}</div>
+          </div>
+          <div class="card-row"><span class="label">Order ID</span><span class="value" style="font-size:11px; font-family:monospace; font-weight:400;">${p.order_id}</span></div>
         `;
         listEl.appendChild(card);
       });
@@ -1237,9 +1507,13 @@
       const tabLabelEl = document.getElementById("tab-label-support");
       const totalUnread = items.reduce((sum, c) => sum + parseInt(c.unread_count, 10), 0);
       tabLabelEl.textContent = totalUnread > 0 ? `Поддержка (${totalUnread})` : "Поддержка";
+      document.getElementById("support-stats").innerHTML = `
+        <div class="stat-mini"><div class="stat-mini-value">${items.length}</div><div class="stat-mini-label">Диалогов</div></div>
+        <div class="stat-mini"><div class="stat-mini-value">${totalUnread}</div><div class="stat-mini-label">Непрочитано</div></div>
+      `;
 
       if (items.length === 0) {
-        listEl.innerHTML = `<div class="empty-text">Обращений пока нет</div>`;
+        listEl.innerHTML = `<div class="empty-text">💬 Обращений пока нет</div>`;
         return;
       }
       listEl.innerHTML = "";
@@ -1250,6 +1524,7 @@
         const card = document.createElement("div");
         card.className = "card support-conv-card" + (unread > 0 ? " support-conv-unread" : "");
         card.innerHTML = `
+          <div class="avatar-circle avatar-circle-sm">${avatarInitial(playerLabel)}</div>
           <div class="support-conv-info">
             <div class="support-conv-name">${playerLabel}</div>
             <div class="support-conv-preview">${prefix}${escapeHtml(c.last_message || "")}</div>
