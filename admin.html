@@ -1174,6 +1174,8 @@
   });
 
   // ===== Платежи =====
+  const paymentMethodLabels = { crypto: "🪙 Крипта", card: "💳 Карта", stars: "⭐ Telegram Stars" };
+
   async function loadPayments() {
     const listEl = document.getElementById("payments-list");
     listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
@@ -1187,11 +1189,15 @@
       listEl.innerHTML = "";
       items.forEach(p => {
         const playerLabel = p.username ? `@${p.username}` : (p.first_name || `ID ${p.telegram_id}`);
+        const amountLine = p.method === "stars"
+          ? `${p.amount_uah} ₴ (${p.amount_stars} ⭐)`
+          : `${p.amount_uah} ₴ (~$${p.amount_usd})`;
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
           <div class="card-row"><span class="label">Игрок</span><span class="value">${playerLabel}</span></div>
-          <div class="card-row"><span class="label">Сумма</span><span class="value">${p.amount_uah} ₴ (~$${p.amount_usd})</span></div>
+          <div class="card-row"><span class="label">Способ</span><span class="value">${paymentMethodLabels[p.method] || p.method}</span></div>
+          <div class="card-row"><span class="label">Сумма</span><span class="value">${amountLine}</span></div>
           <div class="card-row"><span class="label">Order ID</span><span class="value">${p.order_id}</span></div>
           <div class="card-row"><span class="label">Дата</span><span class="value">${formatDate(p.created_at)}</span></div>
           <div class="card-row"><span class="label">Статус</span><span class="status-badge status-${p.status}">${statusLabels[p.status] || p.status}</span></div>
