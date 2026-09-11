@@ -828,6 +828,46 @@
       line-height: 1.5;
     }
 
+    .topup-method-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 16px;
+    }
+
+    .topup-method-tab {
+      flex: 1;
+      text-align: center;
+      background: #15151b;
+      border: 2px solid #232330;
+      border-radius: 12px;
+      padding: 10px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .topup-method-tab.active {
+      border-color: #C6FF1E;
+      color: #C6FF1E;
+    }
+
+    .topup-method-panel {
+      display: none;
+    }
+
+    .topup-method-panel.active {
+      display: block;
+    }
+
+    .stars-preview {
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #C6FF1E;
+      min-height: 18px;
+    }
+
     /* ===== Кнопки действий в инвентаре ===== */
     .inventory-actions {
       display: flex;
@@ -1277,20 +1317,57 @@
       <div class="title">Пополнить баланс</div>
     </div>
 
-    <div class="topup-section-label">Выбери криптовалюту</div>
-    <div class="currency-list" id="currency-list">
-      <div class="currency-loading">Загружаем актуальные курсы...</div>
+    <div class="topup-method-tabs">
+      <div class="topup-method-tab active" data-method="crypto">🪙 Крипта</div>
+      <div class="topup-method-tab" data-method="card">💳 Карта</div>
+      <div class="topup-method-tab" data-method="stars">⭐ Stars</div>
     </div>
 
-    <div class="topup-section-label">Сумма пополнения</div>
-    <div class="topup-input-wrap">
-      <input type="number" id="topup-amount-input" placeholder="Введи сумму в ₴" inputmode="numeric">
-      <div class="topup-min-hint" id="topup-min-hint">Сначала выбери криптовалюту</div>
+    <!-- Криптовалюта -->
+    <div class="topup-method-panel active" id="topup-panel-crypto">
+      <div class="topup-section-label">Выбери криптовалюту</div>
+      <div class="currency-list" id="currency-list">
+        <div class="currency-loading">Загружаем актуальные курсы...</div>
+      </div>
+
+      <div class="topup-section-label">Сумма пополнения</div>
+      <div class="topup-input-wrap">
+        <input type="number" id="topup-amount-input" placeholder="Введи сумму в ₴" inputmode="numeric">
+        <div class="topup-min-hint" id="topup-min-hint">Сначала выбери криптовалюту</div>
+      </div>
+
+      <button class="spin-btn" id="topup-submit-btn" style="margin: 16px;" disabled>Пополнить</button>
+
+      <div class="topup-note">Оплата принимается криптовалютой на защищённой странице NOWPayments. После оплаты вернись сюда и нажми кнопку ниже — баланс обновится в течение пары минут после подтверждения платежа в сети.</div>
     </div>
 
-    <button class="spin-btn" id="topup-submit-btn" style="margin: 16px;" disabled>Пополнить</button>
+    <!-- Банковская карта -->
+    <div class="topup-method-panel" id="topup-panel-card">
+      <div class="topup-section-label">Сумма пополнения</div>
+      <div class="topup-input-wrap">
+        <input type="number" id="card-amount-input" placeholder="Введи сумму в ₴" inputmode="numeric">
+        <div class="topup-min-hint" id="card-min-hint">Загружаем условия оплаты...</div>
+      </div>
 
-    <div class="topup-note">Оплата принимается криптовалютой на защищённой странице NOWPayments. После оплаты вернись сюда и нажми кнопку ниже — баланс обновится в течение пары минут после подтверждения платежа в сети.</div>
+      <button class="spin-btn" id="card-submit-btn" style="margin: 16px;" disabled>Оплатить картой</button>
+
+      <div class="topup-note">Оплата картой Visa/Mastercard на защищённой странице LiqPay. Баланс пополнится сразу после подтверждения платежа.</div>
+    </div>
+
+    <!-- Telegram Stars -->
+    <div class="topup-method-panel" id="topup-panel-stars">
+      <div class="topup-section-label">Сумма пополнения</div>
+      <div class="topup-input-wrap">
+        <input type="number" id="stars-amount-input" placeholder="Введи сумму в ₴" inputmode="numeric">
+        <div class="topup-min-hint" id="stars-min-hint">Загружаем условия оплаты...</div>
+      </div>
+      <div class="stars-preview" id="stars-preview"></div>
+
+      <button class="spin-btn" id="stars-submit-btn" style="margin: 16px;" disabled>Оплатить Stars</button>
+
+      <div class="topup-note">Оплата через встроенный платёж Telegram Stars — картой, Apple Pay или Google Pay прямо внутри Telegram, без перехода на внешние страницы.</div>
+    </div>
+
     <button class="btn-secondary" id="refresh-balance-btn" style="margin: 16px;">Проверить баланс</button>
   </div>
 
@@ -1578,9 +1655,9 @@
       topupScreen.classList.remove("active");
     });
 
-    document.getElementById("refresh-balance-btn").addEventListener("click", async () => {
+    async function refreshBalance(showFeedback = true) {
       const btn = document.getElementById("refresh-balance-btn");
-      btn.textContent = "Проверяем...";
+      if (showFeedback) btn.textContent = "Проверяем...";
       try {
         const res = await fetch(`${API_URL}/api/user`, {
           method: "POST",
@@ -1594,13 +1671,180 @@
         const data = await res.json();
         currentUser.balance = data.balance;
         updateBalanceDisplay();
-        btn.textContent = "Проверить баланс";
-        alert(`Текущий баланс: ${formatMoney(currentUser.balance)}`);
+        if (showFeedback) {
+          btn.textContent = "Проверить баланс";
+          alert(`Текущий баланс: ${formatMoney(currentUser.balance)}`);
+        }
       } catch (err) {
         console.error(err);
-        btn.textContent = "Проверить баланс";
-        alert("Не удалось проверить баланс, попробуй ещё раз");
+        if (showFeedback) {
+          btn.textContent = "Проверить баланс";
+          alert("Не удалось проверить баланс, попробуй ещё раз");
+        }
       }
+    }
+
+    document.getElementById("refresh-balance-btn").addEventListener("click", () => refreshBalance(true));
+
+    // ===== Переключение способа пополнения =====
+    document.querySelectorAll(".topup-method-tab").forEach(tab => {
+      tab.addEventListener("click", () => switchTopupMethod(tab.dataset.method));
+    });
+
+    function switchTopupMethod(method) {
+      document.querySelectorAll(".topup-method-tab").forEach(t => t.classList.toggle("active", t.dataset.method === method));
+      document.querySelectorAll(".topup-method-panel").forEach(p => p.classList.remove("active"));
+      document.getElementById(`topup-panel-${method}`).classList.add("active");
+
+      if (method === "card" && !cardInfoLoaded) loadCardInfo();
+      if (method === "stars" && !starsInfoLoaded) loadStarsInfo();
+    }
+
+    // ===== Оплата картой (LiqPay) =====
+    const cardAmountInput = document.getElementById("card-amount-input");
+    const cardMinHint = document.getElementById("card-min-hint");
+    const cardSubmitBtn = document.getElementById("card-submit-btn");
+    let cardMinUah = null;
+    let cardInfoLoaded = false;
+
+    async function loadCardInfo() {
+      try {
+        const res = await fetch(`${API_URL}/api/payment/card-info`);
+        const data = await res.json();
+        cardMinUah = data.min_uah;
+        cardMinHint.textContent = `Минимальная сумма: ${cardMinUah} ₴`;
+        cardInfoLoaded = true;
+      } catch (err) {
+        console.error(err);
+        cardMinHint.textContent = "Не удалось загрузить условия оплаты";
+      }
+    }
+
+    function validateCardForm() {
+      const amount = parseInt(cardAmountInput.value, 10);
+      if (!cardMinUah || !amount || amount < cardMinUah) {
+        cardMinHint.classList.add("error");
+        cardSubmitBtn.disabled = true;
+        return;
+      }
+      cardMinHint.classList.remove("error");
+      cardSubmitBtn.disabled = false;
+    }
+
+    cardAmountInput.addEventListener("input", validateCardForm);
+
+    cardSubmitBtn.addEventListener("click", async () => {
+      const amount = parseInt(cardAmountInput.value, 10);
+      if (!amount) return;
+      cardSubmitBtn.disabled = true;
+      cardSubmitBtn.textContent = "Создаём платёж...";
+      try {
+        const res = await fetch(`${API_URL}/api/payment/card/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telegram_id: currentUser.telegram_id, amount_uah: amount })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.invoice_url) {
+          alert(data.error || "Не удалось создать платёж, попробуй позже");
+          cardSubmitBtn.disabled = false;
+          cardSubmitBtn.textContent = "Оплатить картой";
+          return;
+        }
+        if (tg?.openLink) {
+          tg.openLink(data.invoice_url);
+        } else {
+          window.open(data.invoice_url, "_blank");
+        }
+        topupScreen.classList.remove("active");
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером, попробуй ещё раз");
+      }
+      cardSubmitBtn.disabled = false;
+      cardSubmitBtn.textContent = "Оплатить картой";
+    });
+
+    // ===== Оплата Telegram Stars =====
+    const starsAmountInput = document.getElementById("stars-amount-input");
+    const starsMinHint = document.getElementById("stars-min-hint");
+    const starsPreviewEl = document.getElementById("stars-preview");
+    const starsSubmitBtn = document.getElementById("stars-submit-btn");
+    let starsMinUah = null;
+    let uahPerStar = null;
+    let starsInfoLoaded = false;
+
+    async function loadStarsInfo() {
+      try {
+        const res = await fetch(`${API_URL}/api/payment/stars-info`);
+        const data = await res.json();
+        starsMinUah = data.min_uah;
+        uahPerStar = data.uah_per_star;
+        starsMinHint.textContent = `Минимальная сумма: ${starsMinUah} ₴`;
+        starsInfoLoaded = true;
+      } catch (err) {
+        console.error(err);
+        starsMinHint.textContent = "Не удалось загрузить условия оплаты";
+      }
+    }
+
+    function validateStarsForm() {
+      const amount = parseInt(starsAmountInput.value, 10);
+      if (!amount || !uahPerStar) {
+        starsPreviewEl.textContent = "";
+      } else {
+        starsPreviewEl.textContent = `≈ ${Math.ceil(amount / uahPerStar)} ⭐`;
+      }
+      if (!starsMinUah || !amount || amount < starsMinUah) {
+        starsMinHint.classList.add("error");
+        starsSubmitBtn.disabled = true;
+        return;
+      }
+      starsMinHint.classList.remove("error");
+      starsSubmitBtn.disabled = false;
+    }
+
+    starsAmountInput.addEventListener("input", validateStarsForm);
+
+    starsSubmitBtn.addEventListener("click", async () => {
+      const amount = parseInt(starsAmountInput.value, 10);
+      if (!amount) return;
+      starsSubmitBtn.disabled = true;
+      starsSubmitBtn.textContent = "Создаём счёт...";
+      try {
+        const res = await fetch(`${API_URL}/api/payment/stars/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telegram_id: currentUser.telegram_id, amount_uah: amount })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.invoice_link) {
+          alert(data.error || "Не удалось создать счёт, попробуй позже");
+          starsSubmitBtn.disabled = false;
+          starsSubmitBtn.textContent = "Оплатить Stars";
+          return;
+        }
+
+        if (tg?.openInvoice) {
+          tg.openInvoice(data.invoice_link, (status) => {
+            if (status === "paid") {
+              alert("Оплата прошла успешно! Баланс обновится через пару секунд 🎉");
+              setTimeout(() => refreshBalance(false), 2000);
+              topupScreen.classList.remove("active");
+            } else if (status === "failed") {
+              alert("Оплата не прошла, попробуй ещё раз");
+            }
+          });
+        } else {
+          // Резервный вариант, если приложение открыто не внутри Telegram
+          window.open(data.invoice_link, "_blank");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером, попробуй ещё раз");
+      }
+      starsSubmitBtn.disabled = false;
+      starsSubmitBtn.textContent = "Оплатить Stars";
     });
 
     // Загружаем список криптовалют с их минимальными суммами (в ₴)
