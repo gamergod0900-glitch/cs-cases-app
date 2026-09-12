@@ -221,6 +221,204 @@
       margin-bottom: 10px;
     }
 
+    /* ===== Апгрейд ===== */
+    .upgrade-intro {
+      text-align: center;
+      padding: 60px 24px;
+      color: #666;
+    }
+
+    .upgrade-intro-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .upgrade-intro-text {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .upgrade-picker {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .upgrade-pick-item {
+      background: #15151b;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border: 2px solid #232330;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .upgrade-pick-item:active { transform: scale(0.96); }
+
+    .upgrade-pick-item img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 8px;
+    }
+
+    .upgrade-pick-item .item-name {
+      font-size: 12px;
+      font-weight: 600;
+      min-height: 32px;
+      margin-bottom: 6px;
+    }
+
+    .upgrade-pick-item .item-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: #C6FF1E;
+    }
+
+    .upgrade-selected-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #15151b;
+      border: 1px solid #232330;
+      border-radius: 16px;
+      margin: 16px;
+      padding: 12px;
+    }
+
+    .upgrade-selected-card img {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .upgrade-selected-info { flex: 1; min-width: 0; }
+
+    .upgrade-selected-name {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upgrade-selected-value {
+      font-size: 12px;
+      color: #C6FF1E;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .upgrade-multiplier-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px;
+      margin-bottom: 14px;
+    }
+
+    .upgrade-multiplier-pill {
+      flex: 1;
+      min-width: 70px;
+      background: #15151b;
+      border: 2px solid #232330;
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .upgrade-multiplier-pill.active { border-color: #C6FF1E; }
+
+    .upgrade-multiplier-pill .mult-value {
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .upgrade-multiplier-pill .mult-chance {
+      font-size: 10px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .upgrade-result-preview {
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+      padding: 0 16px;
+      min-height: 18px;
+      margin-bottom: 6px;
+    }
+
+    .upgrade-roulette-wrap {
+      position: relative;
+      width: 100%;
+      height: 90px;
+      overflow: hidden;
+      background: #15151b;
+      border-top: 1px solid #232330;
+      border-bottom: 1px solid #232330;
+    }
+
+    .upgrade-roulette-pointer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 3px;
+      background: #C6FF1E;
+      transform: translateX(-50%);
+      z-index: 5;
+      box-shadow: 0 0 10px #C6FF1E;
+    }
+
+    .upgrade-roulette-strip {
+      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      will-change: transform;
+    }
+
+    .upgrade-roulette-item {
+      width: 90px;
+      height: 70px;
+      margin: 10px 5px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .upgrade-roulette-item.win-slot {
+      background: rgba(198, 255, 30, 0.12);
+      border: 2px solid #C6FF1E;
+      color: #C6FF1E;
+    }
+
+    .upgrade-roulette-item.lose-slot {
+      background: rgba(255, 80, 80, 0.08);
+      border: 2px solid #3a2020;
+      color: #ff6f6f;
+    }
+
+    .upgrade-roulette-item.winner-slot {
+      animation: winnerPulse 0.6s ease-in-out 2;
+    }
+
     /* ===== Профиль ===== */
     .profile-header {
       display: flex;
@@ -1230,6 +1428,38 @@
     </div>
   </div>
 
+  <!-- Вкладка: Апгрейд -->
+  <div class="tab-screen" id="tab-upgrade">
+    <div class="upgrade-intro" id="upgrade-intro">
+      <div class="upgrade-intro-icon">⚡</div>
+      <div class="upgrade-intro-text">Выбери предмет из инвентаря, чтобы попробовать апгрейднуть его на что-то более ценное</div>
+    </div>
+
+    <div class="upgrade-picker" id="upgrade-picker"></div>
+
+    <div class="upgrade-selected-wrap" id="upgrade-selected-wrap" style="display:none;">
+      <div class="upgrade-selected-card">
+        <img id="upgrade-selected-img" src="" alt="">
+        <div class="upgrade-selected-info">
+          <div class="upgrade-selected-name" id="upgrade-selected-name"></div>
+          <div class="upgrade-selected-value" id="upgrade-selected-value"></div>
+        </div>
+        <button class="btn-secondary" id="upgrade-change-btn">Сменить</button>
+      </div>
+
+      <div class="upgrade-multiplier-row" id="upgrade-multiplier-row"></div>
+
+      <div class="upgrade-result-preview" id="upgrade-result-preview"></div>
+
+      <div class="upgrade-roulette-wrap" id="upgrade-roulette-wrap">
+        <div class="upgrade-roulette-pointer"></div>
+        <div class="upgrade-roulette-strip" id="upgrade-roulette-strip"></div>
+      </div>
+
+      <button class="spin-btn" id="upgrade-submit-btn" style="margin:16px;" disabled>Выбери множитель</button>
+    </div>
+  </div>
+
   <!-- Вкладка: Профиль -->
   <div class="tab-screen" id="tab-profile">
     <div class="profile-header">
@@ -1277,6 +1507,10 @@
     <div class="nav-item" id="nav-inventory">
       <img class="nav-icon" src="images/icon-inventory.png" alt="Инвентарь">
       <div>Инвентарь</div>
+    </div>
+    <div class="nav-item" id="nav-upgrade">
+      <img class="nav-icon" src="images/icon-upgrade.png" alt="Апгрейд">
+      <div>Апгрейд</div>
     </div>
     <div class="nav-item" id="nav-profile">
       <img class="nav-icon" src="images/icon-profile.png" alt="Профиль">
@@ -1440,6 +1674,17 @@
       <div class="result-actions">
         <button class="btn-primary" id="btn-again">Открыть ещё раз</button>
         <button class="btn-secondary" id="btn-inventory">Добавить в инвентарь</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-modal" id="upgrade-result-modal">
+    <div class="result-card">
+      <div class="label" id="upgrade-result-label">Апгрейд...</div>
+      <div class="item-name" id="upgrade-result-title"></div>
+      <div class="item-value" id="upgrade-result-value"></div>
+      <div class="result-actions">
+        <button class="btn-primary" id="upgrade-result-close-btn">Понятно</button>
       </div>
     </div>
   </div>
@@ -1609,14 +1854,16 @@
     // ===== Переключение вкладок =====
     const tabCases = document.getElementById("tab-cases");
     const tabInventory = document.getElementById("tab-inventory");
+    const tabUpgrade = document.getElementById("tab-upgrade");
     const tabProfile = document.getElementById("tab-profile");
     const navCases = document.getElementById("nav-cases");
     const navInventory = document.getElementById("nav-inventory");
+    const navUpgrade = document.getElementById("nav-upgrade");
     const navProfile = document.getElementById("nav-profile");
 
     function switchTab(tab) {
-      [tabCases, tabInventory, tabProfile].forEach(t => t.classList.remove("active"));
-      [navCases, navInventory, navProfile].forEach(t => t.classList.remove("active"));
+      [tabCases, tabInventory, tabUpgrade, tabProfile].forEach(t => t.classList.remove("active"));
+      [navCases, navInventory, navUpgrade, navProfile].forEach(t => t.classList.remove("active"));
 
       if (tab === "cases") {
         tabCases.classList.add("active");
@@ -1625,6 +1872,10 @@
         tabInventory.classList.add("active");
         navInventory.classList.add("active");
         renderInventory();
+      } else if (tab === "upgrade") {
+        tabUpgrade.classList.add("active");
+        navUpgrade.classList.add("active");
+        renderUpgradeTab();
       } else if (tab === "profile") {
         tabProfile.classList.add("active");
         navProfile.classList.add("active");
@@ -1634,6 +1885,7 @@
 
     navCases.addEventListener("click", () => switchTab("cases"));
     navInventory.addEventListener("click", () => switchTab("inventory"));
+    navUpgrade.addEventListener("click", () => switchTab("upgrade"));
     navProfile.addEventListener("click", () => switchTab("profile"));
 
     // ===== Пополнение баланса (реальная оплата криптой через NOWPayments) =====
@@ -2435,6 +2687,205 @@
     chatInput.addEventListener("input", () => {
       chatInput.style.height = "auto";
       chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+    });
+
+        // ===== Апгрейд предметов =====
+    let upgradeInfo = null; // { house_edge, multipliers }
+    let selectedUpgradeItem = null;
+    let selectedMultiplier = null;
+    const UPGRADE_ITEM_SLOT = 100;
+    const upgradeStrip = document.getElementById("upgrade-roulette-strip");
+
+    async function loadUpgradeInfo() {
+      if (upgradeInfo) return upgradeInfo;
+      try {
+        const res = await fetch(`${API_URL}/api/upgrade/info`);
+        upgradeInfo = await res.json();
+      } catch (err) {
+        console.error(err);
+        upgradeInfo = { house_edge: 0.92, multipliers: [1.5, 2, 3, 5, 10, 20] };
+      }
+      return upgradeInfo;
+    }
+
+    async function renderUpgradeTab() {
+      await loadUpgradeInfo();
+      await renderUpgradePicker();
+    }
+
+    async function renderUpgradePicker() {
+      const pickerEl = document.getElementById("upgrade-picker");
+      const introEl = document.getElementById("upgrade-intro");
+      const selectedWrap = document.getElementById("upgrade-selected-wrap");
+      selectedUpgradeItem = null;
+      selectedMultiplier = null;
+      selectedWrap.style.display = "none";
+
+      try {
+        const res = await fetch(`${API_URL}/api/inventory/${currentUser.telegram_id}`);
+        const inventory = await res.json();
+        const eligible = inventory.filter(i => !i.withdraw_status);
+
+        if (eligible.length === 0) {
+          introEl.style.display = "block";
+          introEl.querySelector(".upgrade-intro-text").textContent = "В инвентаре нет предметов для апгрейда. Сначала открой кейс.";
+          pickerEl.innerHTML = "";
+          return;
+        }
+        introEl.style.display = "none";
+        pickerEl.innerHTML = "";
+        eligible.forEach(item => {
+          const el = document.createElement("div");
+          el.className = "upgrade-pick-item";
+          el.innerHTML = `
+            <img src="${item.item_image}" alt="${item.item_name}">
+            <div class="item-name">${item.item_name}</div>
+            <div class="item-value">${formatMoney(item.value)}</div>
+          `;
+          el.addEventListener("click", () => selectUpgradeItem(item));
+          pickerEl.appendChild(el);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function selectUpgradeItem(item) {
+      selectedUpgradeItem = item;
+      selectedMultiplier = null;
+
+      document.getElementById("upgrade-picker").innerHTML = "";
+      document.getElementById("upgrade-intro").style.display = "none";
+      document.getElementById("upgrade-selected-wrap").style.display = "block";
+
+      document.getElementById("upgrade-selected-img").src = item.item_image;
+      document.getElementById("upgrade-selected-name").textContent = item.item_name;
+      document.getElementById("upgrade-selected-value").textContent = formatMoney(item.value);
+
+      const row = document.getElementById("upgrade-multiplier-row");
+      row.innerHTML = "";
+      upgradeInfo.multipliers.forEach(m => {
+        const chance = Math.min(100, (100 / m) * upgradeInfo.house_edge);
+        const pill = document.createElement("div");
+        pill.className = "upgrade-multiplier-pill";
+        pill.innerHTML = `<div class="mult-value">x${m}</div><div class="mult-chance">${chance.toFixed(1)}%</div>`;
+        pill.addEventListener("click", () => selectMultiplier(m, pill));
+        row.appendChild(pill);
+      });
+
+      document.getElementById("upgrade-result-preview").textContent = "";
+      const submitBtn = document.getElementById("upgrade-submit-btn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Выбери множитель";
+      buildUpgradeIdleStrip();
+    }
+
+    function selectMultiplier(multiplier, pillEl) {
+      selectedMultiplier = multiplier;
+      document.querySelectorAll(".upgrade-multiplier-pill").forEach(p => p.classList.remove("active"));
+      pillEl.classList.add("active");
+      const resultValue = Math.round(selectedUpgradeItem.value * multiplier);
+      document.getElementById("upgrade-result-preview").textContent = `Если получится: ${formatMoney(resultValue)}`;
+      const submitBtn = document.getElementById("upgrade-submit-btn");
+      submitBtn.disabled = false;
+      submitBtn.textContent = `Апгрейднуть за x${multiplier}`;
+    }
+
+    document.getElementById("upgrade-change-btn").addEventListener("click", () => {
+      renderUpgradePicker();
+    });
+
+    function buildUpgradeIdleStrip() {
+      upgradeStrip.innerHTML = "";
+      upgradeStrip.style.transition = "none";
+      upgradeStrip.style.transform = "translateX(0px)";
+      for (let i = 0; i < 20; i++) {
+        const isWin = Math.random() < 0.3;
+        const el = document.createElement("div");
+        el.className = `upgrade-roulette-item ${isWin ? "win-slot" : "lose-slot"}`;
+        el.textContent = isWin ? "✓" : "✕";
+        upgradeStrip.appendChild(el);
+      }
+    }
+
+    // Заполняем ленту декоративными исходами + настоящий результат на фиксированной позиции
+    function buildUpgradeStrip(chance, won, multiplier) {
+      upgradeStrip.innerHTML = "";
+      const REEL_LENGTH = 40;
+      const WIN_INDEX = 34;
+      for (let i = 0; i < REEL_LENGTH; i++) {
+        const isWin = i === WIN_INDEX ? won : (Math.random() * 100 < chance);
+        const el = document.createElement("div");
+        el.className = `upgrade-roulette-item ${isWin ? "win-slot" : "lose-slot"}`;
+        el.textContent = isWin ? `x${multiplier}` : "✕";
+        if (i === WIN_INDEX) el.id = "upgrade-winner-slot";
+        upgradeStrip.appendChild(el);
+      }
+      return WIN_INDEX;
+    }
+
+    document.getElementById("upgrade-submit-btn").addEventListener("click", async () => {
+      if (!selectedUpgradeItem || !selectedMultiplier) return;
+      const submitBtn = document.getElementById("upgrade-submit-btn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Крутим...";
+
+      try {
+        const res = await fetch(`${API_URL}/api/upgrade`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telegram_id: currentUser.telegram_id,
+            item_id: selectedUpgradeItem.id,
+            multiplier: selectedMultiplier
+          })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || "Не удалось выполнить апгрейд");
+          submitBtn.disabled = false;
+          submitBtn.textContent = `Апгрейднуть за x${selectedMultiplier}`;
+          return;
+        }
+        const data = await res.json();
+
+        const winIndex = buildUpgradeStrip(data.chance, data.won, selectedMultiplier);
+        const wrapWidth = document.getElementById("upgrade-roulette-wrap").offsetWidth;
+        const randomOffset = Math.random() * 50 - 25;
+        const targetX = -(winIndex * UPGRADE_ITEM_SLOT + UPGRADE_ITEM_SLOT / 2 - wrapWidth / 2) + randomOffset;
+
+        upgradeStrip.style.transition = "none";
+        upgradeStrip.style.transform = "translateX(0px)";
+        void upgradeStrip.offsetWidth;
+        upgradeStrip.style.transition = "transform 4.5s cubic-bezier(0.15, 0.85, 0.1, 1)";
+        upgradeStrip.style.transform = `translateX(${targetX}px)`;
+
+        setTimeout(() => {
+          const winnerEl = document.getElementById("upgrade-winner-slot");
+          if (winnerEl) winnerEl.classList.add("winner-slot");
+          currentUser.balance = data.newBalance;
+          updateBalanceDisplay();
+          showUpgradeResult(data.won, data.resultValue);
+        }, 4600);
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка соединения с сервером, попробуй ещё раз");
+        submitBtn.disabled = false;
+        submitBtn.textContent = `Апгрейднуть за x${selectedMultiplier}`;
+      }
+    });
+
+    function showUpgradeResult(won, resultValue) {
+      const modal = document.getElementById("upgrade-result-modal");
+      document.getElementById("upgrade-result-label").textContent = won ? "Апгрейд удался! 🎉" : "Не повезло 😔";
+      document.getElementById("upgrade-result-title").textContent = won ? `+${formatMoney(resultValue)}` : "Предмет потерян";
+      document.getElementById("upgrade-result-value").textContent = "";
+      modal.classList.add("active");
+    }
+
+    document.getElementById("upgrade-result-close-btn").addEventListener("click", () => {
+      document.getElementById("upgrade-result-modal").classList.remove("active");
+      renderUpgradePicker();
     });
 
         // Запускаем инициализацию приложения
