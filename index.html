@@ -222,33 +222,46 @@
     }
 
     /* ===== Апгрейд ===== */
-    .upgrade-intro {
+    .upgrade-section-label {
+      padding: 16px 16px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .upgrade-section-label .upgrade-stake-total {
+      color: #C6FF1E;
+      font-family: "Space Grotesk", sans-serif;
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 13px;
+    }
+
+    .upgrade-empty-hint {
       text-align: center;
-      padding: 60px 24px;
+      padding: 30px 24px;
       color: #666;
-    }
-
-    .upgrade-intro-icon {
-      font-size: 40px;
-      margin-bottom: 10px;
-    }
-
-    .upgrade-intro-text {
       font-size: 13px;
       line-height: 1.5;
     }
 
-    .upgrade-picker {
+    .upgrade-stake-grid, .upgrade-target-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      padding: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 0 16px 16px;
     }
 
-    .upgrade-pick-item {
+    .upgrade-stake-item, .upgrade-target-item {
+      position: relative;
       background: #15151b;
-      border-radius: 16px;
-      padding: 12px;
+      border-radius: 14px;
+      padding: 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -258,165 +271,159 @@
       transition: border-color 0.15s ease, transform 0.1s ease;
     }
 
-    .upgrade-pick-item:active { transform: scale(0.96); }
+    .upgrade-stake-item:active, .upgrade-target-item:active { transform: scale(0.96); }
 
-    .upgrade-pick-item img {
-      width: 80px;
-      height: 80px;
+    .upgrade-stake-item.selected, .upgrade-target-item.selected {
+      border-color: #C6FF1E;
+      background: rgba(198, 255, 30, 0.06);
+    }
+
+    .upgrade-stake-item .selected-check {
+      display: none;
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #C6FF1E;
+      color: #10130a;
+      font-size: 11px;
+      font-weight: 700;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upgrade-stake-item.selected .selected-check { display: flex; }
+
+    .upgrade-stake-item img, .upgrade-target-item img {
+      width: 56px;
+      height: 56px;
       object-fit: contain;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
-    .upgrade-pick-item .item-name {
-      font-size: 12px;
+    .upgrade-stake-item .item-name, .upgrade-target-item .item-name {
+      font-size: 10px;
       font-weight: 600;
-      min-height: 32px;
-      margin-bottom: 6px;
+      min-height: 24px;
+      line-height: 1.3;
     }
 
-    .upgrade-pick-item .item-value {
-      font-size: 13px;
+    .upgrade-stake-item .item-value, .upgrade-target-item .item-value {
+      font-size: 11px;
       font-weight: 700;
       color: #C6FF1E;
     }
 
-    .upgrade-selected-card {
+    .upgrade-target-search {
+      margin: 0 16px 12px;
+      width: calc(100% - 32px);
+      background: #15151b;
+      border: 2px solid #232330;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .upgrade-target-search:focus { outline: none; border-color: #C6FF1E; }
+
+    /* Круговая шкала шанса */
+    .upgrade-gauge-section {
+      display: none;
+      padding: 10px 16px 4px;
+    }
+
+    .upgrade-gauge-section.active { display: block; }
+
+    .upgrade-gauge-wrap {
+      position: relative;
+      width: 220px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .upgrade-gauge-center {
+      position: absolute;
+      top: 58%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      width: 100%;
+    }
+
+    .upgrade-gauge-percent {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .upgrade-gauge-label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .upgrade-gauge-needle {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      width: 3px;
+      height: 78px;
+      background: #fff;
+      border-radius: 3px;
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(-90deg);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 6px rgba(255,255,255,0.6);
+    }
+
+    .upgrade-vs-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      padding: 6px 16px 16px;
+    }
+
+    .upgrade-vs-card {
+      flex: 1;
       background: #15151b;
       border: 1px solid #232330;
-      border-radius: 16px;
-      margin: 16px;
+      border-radius: 14px;
       padding: 12px;
+      text-align: center;
+      min-width: 0;
     }
 
-    .upgrade-selected-card img {
-      width: 56px;
-      height: 56px;
+    .upgrade-vs-card img {
+      width: 64px;
+      height: 64px;
       object-fit: contain;
-      flex-shrink: 0;
+      margin-bottom: 6px;
     }
 
-    .upgrade-selected-info { flex: 1; min-width: 0; }
-
-    .upgrade-selected-name {
-      font-size: 13px;
-      font-weight: 700;
+    .upgrade-vs-card .vs-name {
+      font-size: 11px;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .upgrade-selected-value {
+    .upgrade-vs-card .vs-value {
       font-size: 12px;
-      color: #C6FF1E;
-      font-weight: 600;
-      margin-top: 2px;
-    }
-
-    .upgrade-multiplier-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 0 16px;
-      margin-bottom: 14px;
-    }
-
-    .upgrade-multiplier-pill {
-      flex: 1;
-      min-width: 70px;
-      background: #15151b;
-      border: 2px solid #232330;
-      border-radius: 12px;
-      padding: 10px 6px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.15s ease;
-    }
-
-    .upgrade-multiplier-pill.active { border-color: #C6FF1E; }
-
-    .upgrade-multiplier-pill .mult-value {
-      font-family: "Space Grotesk", sans-serif;
       font-weight: 700;
-      font-size: 14px;
-    }
-
-    .upgrade-multiplier-pill .mult-chance {
-      font-size: 10px;
-      color: #888;
+      color: #C6FF1E;
       margin-top: 2px;
     }
 
-    .upgrade-result-preview {
-      text-align: center;
-      font-size: 13px;
-      color: #888;
-      padding: 0 16px;
-      min-height: 18px;
-      margin-bottom: 6px;
-    }
-
-    .upgrade-roulette-wrap {
-      position: relative;
-      width: 100%;
-      height: 90px;
-      overflow: hidden;
-      background: #15151b;
-      border-top: 1px solid #232330;
-      border-bottom: 1px solid #232330;
-    }
-
-    .upgrade-roulette-pointer {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 3px;
-      background: #C6FF1E;
-      transform: translateX(-50%);
-      z-index: 5;
-      box-shadow: 0 0 10px #C6FF1E;
-    }
-
-    .upgrade-roulette-strip {
-      display: flex;
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      will-change: transform;
-    }
-
-    .upgrade-roulette-item {
-      width: 90px;
-      height: 70px;
-      margin: 10px 5px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .upgrade-vs-arrow {
+      font-size: 18px;
+      color: #666;
       flex-shrink: 0;
-      font-family: "Space Grotesk", sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-    }
-
-    .upgrade-roulette-item.win-slot {
-      background: rgba(198, 255, 30, 0.12);
-      border: 2px solid #C6FF1E;
-      color: #C6FF1E;
-    }
-
-    .upgrade-roulette-item.lose-slot {
-      background: rgba(255, 80, 80, 0.08);
-      border: 2px solid #3a2020;
-      color: #ff6f6f;
-    }
-
-    .upgrade-roulette-item.winner-slot {
-      animation: winnerPulse 0.6s ease-in-out 2;
     }
 
     /* ===== Профиль ===== */
@@ -1430,33 +1437,47 @@
 
   <!-- Вкладка: Апгрейд -->
   <div class="tab-screen" id="tab-upgrade">
-    <div class="upgrade-intro" id="upgrade-intro">
-      <div class="upgrade-intro-icon">⚡</div>
-      <div class="upgrade-intro-text">Выбери предмет из инвентаря, чтобы попробовать апгрейднуть его на что-то более ценное</div>
+    <div class="upgrade-section-label">
+      <span>Твои предметы (ставка)</span>
+      <span class="upgrade-stake-total" id="upgrade-stake-total"></span>
+    </div>
+    <div id="upgrade-stake-area">
+      <div class="upgrade-empty-hint" id="upgrade-stake-empty">В инвентаре нет предметов для апгрейда. Сначала открой кейс.</div>
+      <div class="upgrade-stake-grid" id="upgrade-stake-grid"></div>
     </div>
 
-    <div class="upgrade-picker" id="upgrade-picker"></div>
+    <div class="upgrade-section-label"><span>Цель апгрейда</span></div>
+    <input type="text" class="upgrade-target-search" id="upgrade-target-search" placeholder="Поиск предмета...">
+    <div class="upgrade-target-grid" id="upgrade-target-grid"></div>
 
-    <div class="upgrade-selected-wrap" id="upgrade-selected-wrap" style="display:none;">
-      <div class="upgrade-selected-card">
-        <img id="upgrade-selected-img" src="" alt="">
-        <div class="upgrade-selected-info">
-          <div class="upgrade-selected-name" id="upgrade-selected-name"></div>
-          <div class="upgrade-selected-value" id="upgrade-selected-value"></div>
+    <div class="upgrade-gauge-section" id="upgrade-gauge-section">
+      <div class="upgrade-gauge-wrap">
+        <svg viewBox="0 0 220 130" width="100%">
+          <path id="upgrade-gauge-track" fill="none" stroke="#232330" stroke-width="16" stroke-linecap="round"></path>
+          <path id="upgrade-gauge-win" fill="none" stroke="#C6FF1E" stroke-width="16" stroke-linecap="round"></path>
+          <path id="upgrade-gauge-lose" fill="none" stroke="#ff5f5f" stroke-width="16" stroke-linecap="round" opacity="0.55"></path>
+        </svg>
+        <div class="upgrade-gauge-needle" id="upgrade-gauge-needle"></div>
+        <div class="upgrade-gauge-center">
+          <div class="upgrade-gauge-percent" id="upgrade-gauge-percent">—</div>
+          <div class="upgrade-gauge-label" id="upgrade-gauge-label"></div>
         </div>
-        <button class="btn-secondary" id="upgrade-change-btn">Сменить</button>
       </div>
 
-      <div class="upgrade-multiplier-row" id="upgrade-multiplier-row"></div>
-
-      <div class="upgrade-result-preview" id="upgrade-result-preview"></div>
-
-      <div class="upgrade-roulette-wrap" id="upgrade-roulette-wrap">
-        <div class="upgrade-roulette-pointer"></div>
-        <div class="upgrade-roulette-strip" id="upgrade-roulette-strip"></div>
+      <div class="upgrade-vs-row">
+        <div class="upgrade-vs-card" id="upgrade-vs-stake">
+          <div class="vs-name">Ставка</div>
+          <div class="vs-value" id="upgrade-vs-stake-value">0 ₴</div>
+        </div>
+        <div class="upgrade-vs-arrow">→</div>
+        <div class="upgrade-vs-card" id="upgrade-vs-target">
+          <img id="upgrade-vs-target-img" src="" alt="">
+          <div class="vs-name" id="upgrade-vs-target-name">—</div>
+          <div class="vs-value" id="upgrade-vs-target-value"></div>
+        </div>
       </div>
 
-      <button class="spin-btn" id="upgrade-submit-btn" style="margin:16px;" disabled>Выбери множитель</button>
+      <button class="spin-btn" id="upgrade-submit-btn" style="margin:16px;" disabled>Выбери предметы и цель</button>
     </div>
   </div>
 
@@ -1681,6 +1702,7 @@
   <div class="result-modal" id="upgrade-result-modal">
     <div class="result-card">
       <div class="label" id="upgrade-result-label">Апгрейд...</div>
+      <img id="upgrade-result-img" src="" alt="" style="width:120px; height:120px; object-fit:contain; margin-bottom:10px; display:none;">
       <div class="item-name" id="upgrade-result-title"></div>
       <div class="item-value" id="upgrade-result-value"></div>
       <div class="result-actions">
@@ -2689,143 +2711,193 @@
       chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
     });
 
-        // ===== Апгрейд предметов =====
-    let upgradeInfo = null; // { house_edge, multipliers }
-    let selectedUpgradeItem = null;
-    let selectedMultiplier = null;
-    const UPGRADE_ITEM_SLOT = 100;
-    const upgradeStrip = document.getElementById("upgrade-roulette-strip");
-
-    async function loadUpgradeInfo() {
-      if (upgradeInfo) return upgradeInfo;
-      try {
-        const res = await fetch(`${API_URL}/api/upgrade/info`);
-        upgradeInfo = await res.json();
-      } catch (err) {
-        console.error(err);
-        upgradeInfo = { house_edge: 0.92, multipliers: [1.5, 2, 3, 5, 10, 20] };
-      }
-      return upgradeInfo;
-    }
+    // ===== Апгрейд предметов (на конкретный предмет из каталога) =====
+    let upgradeTargets = [];       // весь каталог предметов, доступных как цель
+    let eligibleInventory = [];    // предметы инвентаря, которые можно поставить на кон
+    let selectedStakeIds = new Set();
+    let selectedTargetId = null;
+    let currentUpgradeChance = 0;
 
     async function renderUpgradeTab() {
-      await loadUpgradeInfo();
-      await renderUpgradePicker();
+      await Promise.all([loadUpgradeTargets(), loadUpgradeStake()]);
+      selectedStakeIds = new Set();
+      selectedTargetId = null;
+      renderUpgradeStakeGrid();
+      renderUpgradeTargetGrid();
+      updateUpgradeState();
     }
 
-    async function renderUpgradePicker() {
-      const pickerEl = document.getElementById("upgrade-picker");
-      const introEl = document.getElementById("upgrade-intro");
-      const selectedWrap = document.getElementById("upgrade-selected-wrap");
-      selectedUpgradeItem = null;
-      selectedMultiplier = null;
-      selectedWrap.style.display = "none";
+    async function loadUpgradeTargets() {
+      try {
+        const res = await fetch(`${API_URL}/api/upgrade/targets`);
+        upgradeTargets = await res.json();
+      } catch (err) {
+        console.error(err);
+        upgradeTargets = [];
+      }
+    }
 
+    async function loadUpgradeStake() {
       try {
         const res = await fetch(`${API_URL}/api/inventory/${currentUser.telegram_id}`);
         const inventory = await res.json();
-        const eligible = inventory.filter(i => !i.withdraw_status);
-
-        if (eligible.length === 0) {
-          introEl.style.display = "block";
-          introEl.querySelector(".upgrade-intro-text").textContent = "В инвентаре нет предметов для апгрейда. Сначала открой кейс.";
-          pickerEl.innerHTML = "";
-          return;
-        }
-        introEl.style.display = "none";
-        pickerEl.innerHTML = "";
-        eligible.forEach(item => {
-          const el = document.createElement("div");
-          el.className = "upgrade-pick-item";
-          el.innerHTML = `
-            <img src="${item.item_image}" alt="${item.item_name}">
-            <div class="item-name">${item.item_name}</div>
-            <div class="item-value">${formatMoney(item.value)}</div>
-          `;
-          el.addEventListener("click", () => selectUpgradeItem(item));
-          pickerEl.appendChild(el);
-        });
+        eligibleInventory = inventory.filter(i => !i.withdraw_status);
       } catch (err) {
         console.error(err);
+        eligibleInventory = [];
       }
     }
 
-    function selectUpgradeItem(item) {
-      selectedUpgradeItem = item;
-      selectedMultiplier = null;
+    function renderUpgradeStakeGrid() {
+      const gridEl = document.getElementById("upgrade-stake-grid");
+      const emptyEl = document.getElementById("upgrade-stake-empty");
 
-      document.getElementById("upgrade-picker").innerHTML = "";
-      document.getElementById("upgrade-intro").style.display = "none";
-      document.getElementById("upgrade-selected-wrap").style.display = "block";
+      if (eligibleInventory.length === 0) {
+        emptyEl.style.display = "block";
+        gridEl.style.display = "none";
+        gridEl.innerHTML = "";
+        return;
+      }
+      emptyEl.style.display = "none";
+      gridEl.style.display = "grid";
+      gridEl.innerHTML = "";
 
-      document.getElementById("upgrade-selected-img").src = item.item_image;
-      document.getElementById("upgrade-selected-name").textContent = item.item_name;
-      document.getElementById("upgrade-selected-value").textContent = formatMoney(item.value);
-
-      const row = document.getElementById("upgrade-multiplier-row");
-      row.innerHTML = "";
-      upgradeInfo.multipliers.forEach(m => {
-        const chance = Math.min(100, (100 / m) * upgradeInfo.house_edge);
-        const pill = document.createElement("div");
-        pill.className = "upgrade-multiplier-pill";
-        pill.innerHTML = `<div class="mult-value">x${m}</div><div class="mult-chance">${chance.toFixed(1)}%</div>`;
-        pill.addEventListener("click", () => selectMultiplier(m, pill));
-        row.appendChild(pill);
+      eligibleInventory.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "upgrade-stake-item" + (selectedStakeIds.has(item.id) ? " selected" : "");
+        el.innerHTML = `
+          <div class="selected-check">✓</div>
+          <img src="${item.item_image}" alt="${item.item_name}">
+          <div class="item-name">${item.item_name}</div>
+          <div class="item-value">${formatMoney(item.value)}</div>
+        `;
+        el.addEventListener("click", () => {
+          if (selectedStakeIds.has(item.id)) {
+            selectedStakeIds.delete(item.id);
+          } else {
+            selectedStakeIds.add(item.id);
+          }
+          renderUpgradeStakeGrid();
+          updateUpgradeState();
+        });
+        gridEl.appendChild(el);
       });
-
-      document.getElementById("upgrade-result-preview").textContent = "";
-      const submitBtn = document.getElementById("upgrade-submit-btn");
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Выбери множитель";
-      buildUpgradeIdleStrip();
     }
 
-    function selectMultiplier(multiplier, pillEl) {
-      selectedMultiplier = multiplier;
-      document.querySelectorAll(".upgrade-multiplier-pill").forEach(p => p.classList.remove("active"));
-      pillEl.classList.add("active");
-      const resultValue = Math.round(selectedUpgradeItem.value * multiplier);
-      document.getElementById("upgrade-result-preview").textContent = `Если получится: ${formatMoney(resultValue)}`;
-      const submitBtn = document.getElementById("upgrade-submit-btn");
-      submitBtn.disabled = false;
-      submitBtn.textContent = `Апгрейднуть за x${multiplier}`;
+    function renderUpgradeTargetGrid(filterText = "") {
+      const gridEl = document.getElementById("upgrade-target-grid");
+      const query = filterText.trim().toLowerCase();
+      const filtered = upgradeTargets.filter(t => t.name.toLowerCase().includes(query));
+
+      gridEl.innerHTML = "";
+      if (filtered.length === 0) {
+        gridEl.innerHTML = `<div class="upgrade-empty-hint" style="grid-column: 1 / -1;">Ничего не найдено</div>`;
+        return;
+      }
+      filtered.forEach(target => {
+        const el = document.createElement("div");
+        el.className = "upgrade-target-item" + (selectedTargetId === target.id ? " selected" : "");
+        el.innerHTML = `
+          <img src="${target.image}" alt="${target.name}">
+          <div class="item-name">${target.name}</div>
+          <div class="item-value">${formatMoney(target.price)}</div>
+        `;
+        el.addEventListener("click", () => {
+          selectedTargetId = selectedTargetId === target.id ? null : target.id;
+          renderUpgradeTargetGrid(document.getElementById("upgrade-target-search").value);
+          updateUpgradeState();
+        });
+        gridEl.appendChild(el);
+      });
     }
 
-    document.getElementById("upgrade-change-btn").addEventListener("click", () => {
-      renderUpgradePicker();
+    document.getElementById("upgrade-target-search").addEventListener("input", (e) => {
+      renderUpgradeTargetGrid(e.target.value);
     });
 
-    function buildUpgradeIdleStrip() {
-      upgradeStrip.innerHTML = "";
-      upgradeStrip.style.transition = "none";
-      upgradeStrip.style.transform = "translateX(0px)";
-      for (let i = 0; i < 20; i++) {
-        const isWin = Math.random() < 0.3;
-        const el = document.createElement("div");
-        el.className = `upgrade-roulette-item ${isWin ? "win-slot" : "lose-slot"}`;
-        el.textContent = isWin ? "✓" : "✕";
-        upgradeStrip.appendChild(el);
-      }
+    function getStakeItems() {
+      return eligibleInventory.filter(i => selectedStakeIds.has(i.id));
     }
 
-    // Заполняем ленту декоративными исходами + настоящий результат на фиксированной позиции
-    function buildUpgradeStrip(chance, won, multiplier) {
-      upgradeStrip.innerHTML = "";
-      const REEL_LENGTH = 40;
-      const WIN_INDEX = 34;
-      for (let i = 0; i < REEL_LENGTH; i++) {
-        const isWin = i === WIN_INDEX ? won : (Math.random() * 100 < chance);
-        const el = document.createElement("div");
-        el.className = `upgrade-roulette-item ${isWin ? "win-slot" : "lose-slot"}`;
-        el.textContent = isWin ? `x${multiplier}` : "✕";
-        if (i === WIN_INDEX) el.id = "upgrade-winner-slot";
-        upgradeStrip.appendChild(el);
+    function getStakeValue() {
+      return getStakeItems().reduce((sum, i) => sum + i.value, 0);
+    }
+
+    // Отражает live-превью шанса, пока игрок выбирает ставку и цель (до нажатия "Прокачать")
+    function updateUpgradeState() {
+      const totalEl = document.getElementById("upgrade-stake-total");
+      const stakeValue = getStakeValue();
+      totalEl.textContent = selectedStakeIds.size > 0 ? `Ставка: ${formatMoney(stakeValue)}` : "";
+
+      const gaugeSection = document.getElementById("upgrade-gauge-section");
+      const submitBtn = document.getElementById("upgrade-submit-btn");
+      const target = upgradeTargets.find(t => t.id === selectedTargetId);
+
+      document.getElementById("upgrade-vs-stake-value").textContent = formatMoney(stakeValue);
+
+      if (!target) {
+        gaugeSection.classList.remove("active");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Выбери предметы и цель";
+        return;
       }
-      return WIN_INDEX;
+
+      document.getElementById("upgrade-vs-target-img").src = target.image;
+      document.getElementById("upgrade-vs-target-name").textContent = target.name;
+      document.getElementById("upgrade-vs-target-value").textContent = formatMoney(target.price);
+
+      if (selectedStakeIds.size === 0) {
+        gaugeSection.classList.remove("active");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Выбери хотя бы один предмет";
+        return;
+      }
+
+      gaugeSection.classList.add("active");
+      const chance = Math.min(100, (stakeValue / target.price) * 100 * 0.92);
+      currentUpgradeChance = chance;
+      drawUpgradeGauge(chance);
+      setUpgradeNeedle(chance);
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = `Прокачать (${chance.toFixed(1)}%)`;
+    }
+
+    // Точка на дуге гейджа (0% — слева, 100% — справа, проходя через верх)
+    function upgradeGaugePoint(percent, cx, cy, r) {
+      const theta = Math.PI * (1 - percent / 100);
+      return { x: cx + r * Math.cos(theta), y: cy - r * Math.sin(theta) };
+    }
+
+    function drawUpgradeGauge(chance) {
+      const cx = 110, cy = 110, r = 90;
+      const p0 = upgradeGaugePoint(0, cx, cy, r);
+      const p100 = upgradeGaugePoint(100, cx, cy, r);
+      const pChance = upgradeGaugePoint(chance, cx, cy, r);
+
+      document.getElementById("upgrade-gauge-track").setAttribute("d", `M ${p0.x} ${p0.y} A ${r} ${r} 0 0 1 ${p100.x} ${p100.y}`);
+      document.getElementById("upgrade-gauge-win").setAttribute("d", `M ${p0.x} ${p0.y} A ${r} ${r} 0 0 1 ${pChance.x} ${pChance.y}`);
+      document.getElementById("upgrade-gauge-lose").setAttribute("d", `M ${pChance.x} ${pChance.y} A ${r} ${r} 0 0 1 ${p100.x} ${p100.y}`);
+
+      const percentEl = document.getElementById("upgrade-gauge-percent");
+      const labelEl = document.getElementById("upgrade-gauge-label");
+      percentEl.textContent = `${chance.toFixed(1)}%`;
+      let label, color;
+      if (chance >= 60) { label = "высокий шанс"; color = "#C6FF1E"; }
+      else if (chance >= 30) { label = "средний шанс"; color = "#ffb800"; }
+      else { label = "низкий шанс"; color = "#ff5f5f"; }
+      percentEl.style.color = color;
+      labelEl.textContent = label;
+      labelEl.style.color = color;
+    }
+
+    function setUpgradeNeedle(percent) {
+      const angle = -90 + (Math.min(100, Math.max(0, percent)) / 100) * 180;
+      document.getElementById("upgrade-gauge-needle").style.transform = `translateX(-50%) rotate(${angle}deg)`;
     }
 
     document.getElementById("upgrade-submit-btn").addEventListener("click", async () => {
-      if (!selectedUpgradeItem || !selectedMultiplier) return;
+      if (selectedStakeIds.size === 0 || !selectedTargetId) return;
       const submitBtn = document.getElementById("upgrade-submit-btn");
       submitBtn.disabled = true;
       submitBtn.textContent = "Крутим...";
@@ -2836,57 +2908,65 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             telegram_id: currentUser.telegram_id,
-            item_id: selectedUpgradeItem.id,
-            multiplier: selectedMultiplier
+            item_ids: [...selectedStakeIds],
+            target_catalog_item_id: selectedTargetId
           })
         });
         if (!res.ok) {
           const errData = await res.json();
           alert(errData.error || "Не удалось выполнить апгрейд");
           submitBtn.disabled = false;
-          submitBtn.textContent = `Апгрейднуть за x${selectedMultiplier}`;
+          updateUpgradeState();
           return;
         }
         const data = await res.json();
 
-        const winIndex = buildUpgradeStrip(data.chance, data.won, selectedMultiplier);
-        const wrapWidth = document.getElementById("upgrade-roulette-wrap").offsetWidth;
-        const randomOffset = Math.random() * 50 - 25;
-        const targetX = -(winIndex * UPGRADE_ITEM_SLOT + UPGRADE_ITEM_SLOT / 2 - wrapWidth / 2) + randomOffset;
-
-        upgradeStrip.style.transition = "none";
-        upgradeStrip.style.transform = "translateX(0px)";
-        void upgradeStrip.offsetWidth;
-        upgradeStrip.style.transition = "transform 4.5s cubic-bezier(0.15, 0.85, 0.1, 1)";
-        upgradeStrip.style.transform = `translateX(${targetX}px)`;
+        // Стрелка несколько раз "проходит" по шкале туда-сюда, затем останавливается на реальном результате сервера
+        const needleEl = document.getElementById("upgrade-gauge-needle");
+        let step = 0;
+        const bounce = setInterval(() => {
+          const fake = step % 2 === 0 ? 92 : 8;
+          setUpgradeNeedle(fake);
+          step++;
+        }, 260);
 
         setTimeout(() => {
-          const winnerEl = document.getElementById("upgrade-winner-slot");
-          if (winnerEl) winnerEl.classList.add("winner-slot");
-          currentUser.balance = data.newBalance;
-          updateBalanceDisplay();
-          showUpgradeResult(data.won, data.resultValue);
-        }, 4600);
+          clearInterval(bounce);
+          setUpgradeNeedle(data.roll);
+          setTimeout(() => {
+            showUpgradeResult(data.won, data.target);
+          }, 500);
+        }, 1800);
       } catch (err) {
         console.error(err);
         alert("Ошибка соединения с сервером, попробуй ещё раз");
         submitBtn.disabled = false;
-        submitBtn.textContent = `Апгрейднуть за x${selectedMultiplier}`;
+        updateUpgradeState();
       }
     });
 
-    function showUpgradeResult(won, resultValue) {
+    function showUpgradeResult(won, target) {
       const modal = document.getElementById("upgrade-result-modal");
+      const imgEl = document.getElementById("upgrade-result-img");
       document.getElementById("upgrade-result-label").textContent = won ? "Апгрейд удался! 🎉" : "Не повезло 😔";
-      document.getElementById("upgrade-result-title").textContent = won ? `+${formatMoney(resultValue)}` : "Предмет потерян";
-      document.getElementById("upgrade-result-value").textContent = "";
+      if (won) {
+        imgEl.src = target.image;
+        imgEl.style.display = "block";
+        document.getElementById("upgrade-result-title").textContent = target.name;
+        document.getElementById("upgrade-result-value").textContent = formatMoney(target.value);
+      } else {
+        imgEl.style.display = "none";
+        document.getElementById("upgrade-result-title").textContent = "Предметы потеряны";
+        document.getElementById("upgrade-result-value").textContent = "";
+      }
       modal.classList.add("active");
     }
 
     document.getElementById("upgrade-result-close-btn").addEventListener("click", () => {
       document.getElementById("upgrade-result-modal").classList.remove("active");
-      renderUpgradePicker();
+      renderUpgradeTab();
     });
+
 
         // Запускаем инициализацию приложения
     initApp();

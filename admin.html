@@ -475,7 +475,7 @@
     /* Кейсы */
     .case-item-row {
       display: grid;
-      grid-template-columns: 1fr 1fr 90px 70px 70px 30px;
+      grid-template-columns: 1fr 90px 30px;
       gap: 6px;
       margin-bottom: 6px;
     }
@@ -845,6 +845,7 @@
       <div class="tab-btn active" data-tab="withdrawals"><span class="tab-icon">💸</span><span class="tab-label" id="tab-label-withdrawals">Выводы</span></div>
       <div class="tab-btn" data-tab="users"><span class="tab-icon">👤</span><span class="tab-label" id="tab-label-users">Игроки</span></div>
       <div class="tab-btn" data-tab="cases"><span class="tab-icon">🎁</span><span class="tab-label" id="tab-label-cases">Кейсы</span></div>
+      <div class="tab-btn" data-tab="catalog"><span class="tab-icon">📚</span><span class="tab-label" id="tab-label-catalog">Каталог</span></div>
       <div class="tab-btn" data-tab="payments"><span class="tab-icon">💳</span><span class="tab-label" id="tab-label-payments">Платежи</span></div>
       <div class="tab-btn" data-tab="support"><span class="tab-icon">💬</span><span class="tab-label" id="tab-label-support">Поддержка</span></div>
     </div>
@@ -867,6 +868,13 @@
       <div class="stats-bar" id="cases-stats"></div>
       <div id="cases-list" class="loading-text">Загрузка...</div>
       <button class="fab-add" id="add-case-btn">+ Кейс</button>
+    </div>
+
+    <!-- Каталог предметов -->
+    <div class="tab-content" id="tab-catalog">
+      <div class="stats-bar" id="catalog-stats"></div>
+      <div id="catalog-list" class="loading-text">Загрузка...</div>
+      <button class="fab-add" id="add-catalog-btn">+ Предмет</button>
     </div>
 
     <!-- Платежи -->
@@ -919,7 +927,7 @@
       </div>
 
       <div class="form-field">
-        <label>Предметы внутри</label>
+        <label>Предметы внутри (выбираются из каталога, шанс — свой для этого кейса)</label>
         <div id="case-items-editor"></div>
         <button class="btn-secondary" id="add-item-row-btn" style="margin-top:8px;">+ Предмет</button>
       </div>
@@ -929,6 +937,41 @@
       <div class="modal-actions">
         <button class="btn" id="case-save-btn">Сохранить</button>
         <button class="btn-secondary" id="case-cancel-btn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="catalog-modal">
+    <div class="modal-card">
+      <h2 id="catalog-modal-title">Новый предмет</h2>
+
+      <div class="form-field">
+        <label>Название</label>
+        <input type="text" id="catalog-name-input" placeholder="AWP | Chromatic Aberration">
+      </div>
+      <div class="form-field">
+        <label>Путь к картинке (уже загруженной в images/ на GitHub)</label>
+        <input type="text" id="catalog-image-input" placeholder="images/skin-awp-chromatic.png">
+      </div>
+      <div class="form-field">
+        <label>Редкость</label>
+        <select id="catalog-rarity-input">
+          <option value="common">common</option>
+          <option value="rare">rare</option>
+          <option value="epic">epic</option>
+          <option value="legendary">legendary</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Цена (₴)</label>
+        <input type="number" id="catalog-price-input" placeholder="480">
+      </div>
+
+      <div class="error-text" id="catalog-modal-error"></div>
+
+      <div class="modal-actions">
+        <button class="btn" id="catalog-save-btn">Сохранить</button>
+        <button class="btn-secondary" id="catalog-cancel-btn">Отмена</button>
       </div>
     </div>
   </div>
@@ -1007,6 +1050,7 @@
     loadWithdrawals();
     loadUsers();
     loadCases();
+    loadCatalog();
     loadPayments();
     loadSupport();
     // Тихий фоновый опрос новых обращений в поддержку — работает независимо от того, какая вкладка открыта
@@ -1300,7 +1344,7 @@
         const card = document.createElement("div");
         card.className = "card";
         const itemsChips = c.items
-          .map(i => `<span class="item-chip rarity-${i.rarity}">${i.name} · ${i.weight}% · ${i.value}₴</span>`)
+          .map(i => `<span class="item-chip rarity-${i.item_rarity}">${i.item_name} · ${i.weight}% · ${i.item_value}₴</span>`)
           .join("");
         card.innerHTML = `
           <div class="card-header">
@@ -1341,21 +1385,21 @@
 
   const caseModal = document.getElementById("case-modal");
   const caseItemsEditor = document.getElementById("case-items-editor");
+  let catalogItemsCache = [];
 
-  function addItemRow(item = { name: "", image: "", rarity: "common", weight: "", value: "" }) {
+  function addItemRow(item = null) {
     const row = document.createElement("div");
     row.className = "case-item-row";
+    const options = catalogItemsCache.map(c => {
+      const selected = item && item.catalog_item_id === c.id ? "selected" : "";
+      return `<option value="${c.id}" ${selected}>${c.name} — ${c.price}₴</option>`;
+    }).join("");
     row.innerHTML = `
-      <input type="text" placeholder="Название" class="item-name" value="${item.name}">
-      <input type="text" placeholder="images/skin.png" class="item-image" value="${item.image}">
-      <select class="item-rarity">
-        <option value="common" ${item.rarity === "common" ? "selected" : ""}>common</option>
-        <option value="rare" ${item.rarity === "rare" ? "selected" : ""}>rare</option>
-        <option value="epic" ${item.rarity === "epic" ? "selected" : ""}>epic</option>
-        <option value="legendary" ${item.rarity === "legendary" ? "selected" : ""}>legendary</option>
+      <select class="item-catalog-select">
+        <option value="">— выбери предмет —</option>
+        ${options}
       </select>
-      <input type="number" placeholder="Шанс %" class="item-weight" value="${item.weight}">
-      <input type="number" placeholder="Цена ₴" class="item-value" value="${item.value}">
+      <input type="number" placeholder="Шанс %" class="item-weight" value="${item ? item.weight : ""}">
       <button class="remove-item-btn">✕</button>
     `;
     row.querySelector(".remove-item-btn").addEventListener("click", () => row.remove());
@@ -1364,8 +1408,9 @@
 
   document.getElementById("add-item-row-btn").addEventListener("click", () => addItemRow());
 
-  function openCaseModal(caseData = null) {
-    document.getElementById("case-modal-error").textContent = "";
+  async function openCaseModal(caseData = null) {
+    const errorEl = document.getElementById("case-modal-error");
+    errorEl.textContent = "";
     caseItemsEditor.innerHTML = "";
     editingCaseId = caseData ? caseData.id : null;
 
@@ -1375,6 +1420,17 @@
     document.getElementById("case-name-input").value = caseData ? caseData.name : "";
     document.getElementById("case-price-input").value = caseData ? caseData.price : "";
     document.getElementById("case-image-input").value = caseData ? caseData.image : "";
+
+    try {
+      const res = await apiRequest("/api/admin/catalog");
+      catalogItemsCache = await res.json();
+    } catch (err) {
+      catalogItemsCache = [];
+    }
+
+    if (catalogItemsCache.length === 0) {
+      errorEl.textContent = "Сначала добавь хотя бы один предмет во вкладке «Каталог»";
+    }
 
     if (caseData && caseData.items.length) {
       caseData.items.forEach(addItemRow);
@@ -1398,15 +1454,12 @@
     const image = document.getElementById("case-image-input").value.trim();
 
     const items = [...caseItemsEditor.querySelectorAll(".case-item-row")].map(row => ({
-      name: row.querySelector(".item-name").value.trim(),
-      image: row.querySelector(".item-image").value.trim(),
-      rarity: row.querySelector(".item-rarity").value,
-      weight: parseInt(row.querySelector(".item-weight").value, 10),
-      value: parseInt(row.querySelector(".item-value").value, 10)
+      catalog_item_id: parseInt(row.querySelector(".item-catalog-select").value, 10),
+      weight: parseInt(row.querySelector(".item-weight").value, 10)
     }));
 
-    if (!id || !name || !price || !image || items.some(i => !i.name || !i.image || !i.weight || !i.value)) {
-      errorEl.textContent = "Заполни все поля, включая все предметы";
+    if (!id || !name || !price || !image || items.length === 0 || items.some(i => !i.catalog_item_id || !i.weight)) {
+      errorEl.textContent = "Заполни все поля и выбери предмет из каталога для каждой строки";
       return;
     }
 
@@ -1426,6 +1479,116 @@
       loadCases();
     } catch (err) {
       errorEl.textContent = "Не удалось сохранить кейс";
+    }
+  });
+
+  // ===== Каталог предметов =====
+  const catalogModal = document.getElementById("catalog-modal");
+  let editingCatalogId = null;
+
+  async function loadCatalog() {
+    const listEl = document.getElementById("catalog-list");
+    listEl.innerHTML = `<div class="loading-text">Загрузка...</div>`;
+    try {
+      const res = await apiRequest("/api/admin/catalog");
+      const items = await res.json();
+
+      const totalValue = items.reduce((sum, c) => sum + c.price, 0);
+      document.getElementById("catalog-stats").innerHTML = `
+        <div class="stat-mini"><div class="stat-mini-value">${items.length}</div><div class="stat-mini-label">Предметов в каталоге</div></div>
+        <div class="stat-mini"><div class="stat-mini-value">${totalValue.toLocaleString("ru-RU")} ₴</div><div class="stat-mini-label">Суммарная цена</div></div>
+      `;
+
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-text">📚 Каталог пуст — добавь первый предмет</div>`;
+        return;
+      }
+      listEl.innerHTML = "";
+      items.forEach(c => {
+        const usage = parseInt(c.usage_count, 10);
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-header">
+            <img src="${c.image}" alt="${c.name}" class="case-thumb-lg">
+            <div class="card-header-info">
+              <div class="card-header-name">${c.name}</div>
+              <div class="card-header-sub">Используется в ${usage} кейс(ах)</div>
+            </div>
+            <div class="card-highlight-value">${c.price} ₴</div>
+          </div>
+          <div class="item-chip-list"><span class="item-chip rarity-${c.rarity}">${c.rarity}</span></div>
+          <div class="card-actions">
+            <button class="btn-secondary" data-edit-catalog="${c.id}">Редактировать</button>
+            <button class="btn-danger" data-delete-catalog="${c.id}">Удалить</button>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+
+      listEl.querySelectorAll("button[data-edit-catalog]").forEach(btn => {
+        btn.addEventListener("click", () => openCatalogModal(items.find(c => c.id === parseInt(btn.dataset.editCatalog, 10))));
+      });
+      listEl.querySelectorAll("button[data-delete-catalog]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Удалить этот предмет из каталога?")) return;
+          try {
+            await apiRequest(`/api/admin/catalog/${btn.dataset.deleteCatalog}`, { method: "DELETE" });
+            loadCatalog();
+          } catch (err) {
+            alert("Не удалось удалить — возможно, предмет всё ещё используется в кейсах");
+          }
+        });
+      });
+    } catch (err) {
+      listEl.innerHTML = `<div class="empty-text">Ошибка загрузки</div>`;
+    }
+  }
+
+  function openCatalogModal(item = null) {
+    editingCatalogId = item ? item.id : null;
+    document.getElementById("catalog-modal-error").textContent = "";
+    document.getElementById("catalog-modal-title").textContent = item ? "Редактировать предмет" : "Новый предмет";
+    document.getElementById("catalog-name-input").value = item ? item.name : "";
+    document.getElementById("catalog-image-input").value = item ? item.image : "";
+    document.getElementById("catalog-rarity-input").value = item ? item.rarity : "common";
+    document.getElementById("catalog-price-input").value = item ? item.price : "";
+    catalogModal.classList.add("active");
+  }
+
+  document.getElementById("add-catalog-btn").addEventListener("click", () => openCatalogModal());
+  document.getElementById("catalog-cancel-btn").addEventListener("click", () => catalogModal.classList.remove("active"));
+
+  document.getElementById("catalog-save-btn").addEventListener("click", async () => {
+    const errorEl = document.getElementById("catalog-modal-error");
+    errorEl.textContent = "";
+
+    const name = document.getElementById("catalog-name-input").value.trim();
+    const image = document.getElementById("catalog-image-input").value.trim();
+    const rarity = document.getElementById("catalog-rarity-input").value;
+    const price = parseInt(document.getElementById("catalog-price-input").value, 10);
+
+    if (!name || !image || !rarity || !price) {
+      errorEl.textContent = "Заполни все поля";
+      return;
+    }
+
+    try {
+      if (editingCatalogId) {
+        await apiRequest(`/api/admin/catalog/${editingCatalogId}`, {
+          method: "PUT",
+          body: JSON.stringify({ name, image, rarity, price })
+        });
+      } else {
+        await apiRequest("/api/admin/catalog", {
+          method: "POST",
+          body: JSON.stringify({ name, image, rarity, price })
+        });
+      }
+      catalogModal.classList.remove("active");
+      loadCatalog();
+    } catch (err) {
+      errorEl.textContent = "Не удалось сохранить предмет";
     }
   });
 
